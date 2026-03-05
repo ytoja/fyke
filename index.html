@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FysiikkaLab – Liike & Voima</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1117;--card:#161b22;--card2:#1c2333;--border:#21262d;
+  --accent:#f78166;--blue:#58a6ff;--green:#3fb950;--purple:#bc8cff;
+  --yellow:#e3b341;--text:#e6edf3;--muted:#7d8590;--radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+  background-image:radial-gradient(ellipse at 15% 0%,rgba(88,166,255,0.07) 0%,transparent 50%),
+  radial-gradient(ellipse at 85% 100%,rgba(247,129,102,0.06) 0%,transparent 50%);}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+@keyframes carMove{0%{left:4%}100%{left:76%}}
+@keyframes ballFall{0%{top:6%}100%{top:68%}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes pop{0%{transform:scale(0.8);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes wiggle{0%,100%{transform:rotate(0deg)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+
+.app-page{display:none}
+.app-page.active{display:block;animation:fadeUp .35s ease}
+
+/* ══ LOADING ══ */
+.loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem}
+.loading-overlay.hidden{display:none}
+.loading-spinner{width:38px;height:38px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+.loading-text{font-family:'Fredoka One',cursive;font-size:1rem;color:var(--muted)}
+
+/* ══ LOGIN ══ */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.login-card{background:var(--card);border:2px solid var(--border);border-radius:24px;padding:2.5rem 2.8rem;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.login-logo{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--accent);margin-bottom:.2rem}
+.login-logo span{color:var(--blue)}
+.login-kurssi{font-size:.78rem;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:1.8rem}
+.login-label{font-family:'Fredoka One',cursive;font-size:1.1rem;margin-bottom:.35rem}
+.login-sub{font-size:.82rem;color:var(--muted);margin-bottom:1.1rem;line-height:1.6}
+.login-input{width:100%;background:var(--card2);border:2px solid var(--border);border-radius:12px;padding:.82rem 1.2rem;color:var(--text);font-family:'Nunito',sans-serif;font-size:1.15rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;text-align:center;outline:none;transition:border-color .2s;margin-bottom:.9rem}
+.login-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(247,129,102,.12)}
+.login-input::placeholder{text-transform:none;letter-spacing:0;font-weight:600;color:var(--muted);font-size:.95rem}
+.login-btn{width:100%;background:linear-gradient(135deg,var(--accent),#c94010);color:#fff;border:none;border-radius:50px;padding:.88rem;font-family:'Fredoka One',cursive;font-size:1.1rem;cursor:pointer;transition:all .15s;box-shadow:0 4px 20px rgba(247,129,102,.3);margin-bottom:.75rem}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(247,129,102,.4)}
+.login-err{color:var(--accent);font-size:.82rem;font-weight:700;margin-top:.3rem;display:none;animation:slideIn .2s ease}
+.login-divider{display:flex;align-items:center;gap:.7rem;margin:1.1rem 0;color:var(--muted);font-size:.78rem}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.login-teacher-btn{width:100%;background:var(--card2);border:2px solid var(--border);color:var(--muted);border-radius:50px;padding:.68rem;font-family:'Nunito',sans-serif;font-size:.87rem;font-weight:800;cursor:pointer;transition:all .15s}
+.login-teacher-btn:hover{border-color:var(--purple);color:var(--purple)}
+
+/* ══ PORTAL ══ */
+.p-topbar{background:linear-gradient(135deg,#161b22,#0d1117);border-bottom:2px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.p-logo{font-family:'Fredoka One',cursive;font-size:1.25rem;color:var(--accent)}
+.p-logo span{color:var(--blue)}
+.p-logo small{display:block;font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:600;color:var(--muted);margin-top:-2px}
+.p-student-badge{display:flex;align-items:center;gap:.55rem;background:var(--card2);border:1px solid var(--border);border-radius:50px;padding:.28rem .85rem}
+.p-student-badge .code{font-family:'Fredoka One',cursive;color:var(--accent);font-size:.9rem;letter-spacing:2px}
+.p-student-badge .lbl{font-size:.72rem;color:var(--muted);font-weight:700}
+.p-hero{padding:2.2rem 2rem 1.3rem;max-width:900px;margin:0 auto;display:flex;align-items:flex-start;gap:1.6rem;flex-wrap:wrap}
+.p-avatar{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:2.2rem;flex-shrink:0;box-shadow:0 0 0 4px var(--border),0 0 0 7px rgba(247,129,102,.1)}
+.p-hero-tag{font-size:.76rem;font-weight:700;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.22rem}
+.p-hero-nimi{font-family:'Fredoka One',cursive;font-size:clamp(1.5rem,4vw,2.3rem);line-height:1.1;margin-bottom:.38rem;background:linear-gradient(135deg,#e6edf3,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.p-hero-sub{font-size:.86rem;color:var(--muted);line-height:1.65;max-width:430px}
+.p-wrap{max-width:900px;margin:0 auto;padding:0 2rem 3rem}
+.p-prog-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.3rem 1.7rem;margin-bottom:1.8rem}
+.p-prog-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem;flex-wrap:wrap;gap:.5rem}
+.p-prog-title{font-family:'Fredoka One',cursive;font-size:1rem}
+.p-prog-pct{font-family:'Fredoka One',cursive;font-size:1.45rem;color:var(--accent)}
+.p-big-bar{height:10px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:.65rem}
+.p-big-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:99px;transition:width .8s cubic-bezier(.34,1.56,.64,1)}
+.p-legend{display:flex;gap:.9rem;flex-wrap:wrap;font-size:.74rem;font-weight:700;color:var(--muted)}
+.ldot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:.28rem}
+.p-section-label{font-family:'Fredoka One',cursive;font-size:1rem;color:var(--muted);margin-bottom:.85rem}
+.p-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:1.05rem;margin-bottom:2.5rem}
+.p-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.4rem;cursor:pointer;transition:all .2s}
+.p-card:hover{transform:translateY(-4px)}
+.p-card.liike:hover{border-color:var(--blue);box-shadow:0 10px 28px rgba(88,166,255,.12)}
+.p-card.voima:hover{border-color:var(--accent);box-shadow:0 10px 28px rgba(247,129,102,.12)}
+.p-card.tulossa{opacity:.35;cursor:default;border-style:dashed}
+.p-card.valmis{border-color:var(--green)}
+.p-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.8rem}
+.p-card-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0}
+.p-card-icon.liike{background:rgba(88,166,255,.12)}
+.p-card-icon.voima{background:rgba(247,129,102,.12)}
+.p-card-icon.tulossa{background:var(--card2)}
+.p-sbadge{font-size:.67rem;font-weight:800;padding:.17rem .52rem;border-radius:99px;text-transform:uppercase;letter-spacing:.5px}
+.sb-avoin{background:rgba(88,166,255,.1);color:var(--blue);border:1px solid rgba(88,166,255,.25)}
+.sb-kesken{background:rgba(227,179,65,.1);color:var(--yellow);border:1px solid rgba(227,179,65,.3)}
+.sb-valmis{background:rgba(63,185,80,.1);color:var(--green);border:1px solid rgba(63,185,80,.3)}
+.sb-tulossa{background:var(--card2);color:var(--muted);border:1px solid var(--border)}
+.p-card-nimi{font-family:'Fredoka One',cursive;font-size:1.08rem;margin-bottom:.25rem}
+.p-card-nimi.liike{color:var(--blue)}
+.p-card-nimi.voima{color:var(--accent)}
+.p-card-nimi.tulossa{color:var(--muted)}
+.p-card-kuvaus{font-size:.79rem;color:var(--muted);line-height:1.55;margin-bottom:.82rem}
+.p-osa-palkit{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.82rem}
+.p-osa-rivi{display:flex;align-items:center;gap:.5rem}
+.p-osa-label{font-size:.7rem;font-weight:700;color:var(--muted);width:68px;flex-shrink:0}
+.p-osa-bar{flex:1;height:5px;background:var(--border);border-radius:99px;overflow:hidden}
+.p-osa-fill{height:100%;border-radius:99px;transition:width .5s ease}
+.p-card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:.72rem;border-top:1px solid var(--border)}
+.p-card-pts{font-size:.76rem;color:var(--muted);font-weight:700}
+.p-card-pts span{color:var(--yellow);font-family:'Fredoka One',cursive;font-size:.92rem}
+.p-cta{font-size:.76rem;font-weight:800}
+.p-cta.liike{color:var(--blue)}.p-cta.voima{color:var(--accent)}.p-cta.done{color:var(--green)}
+
+/* ══ TEACHER ══ */
+.t-topbar{background:linear-gradient(135deg,#150d2e,#0d1117);border-bottom:2px solid #2a1860;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.t-logo{font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--purple)}
+.t-logo span{color:var(--blue)}
+.t-back-btn{background:rgba(188,140,255,.1);border:1px solid var(--purple);color:var(--purple);border-radius:50px;padding:.32rem .85rem;font-size:.78rem;font-weight:800;cursor:pointer;transition:all .15s}
+.t-back-btn:hover{background:rgba(188,140,255,.2)}
+.t-wrap{max-width:980px;margin:0 auto;padding:2rem 1.5rem 4rem}
+.t-hero{margin-bottom:1.8rem}
+.t-hero h1{font-family:'Fredoka One',cursive;font-size:1.75rem;color:var(--purple);margin-bottom:.28rem}
+.t-hero p{font-size:.86rem;color:var(--muted);line-height:1.6}
+.t-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;margin-bottom:1.8rem}
+.t-stat-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.1rem;text-align:center}
+.t-stat-card .val{font-family:'Fredoka One',cursive;font-size:1.9rem;margin-bottom:.18rem}
+.t-stat-card .lab{font-size:.73rem;color:var(--muted);font-weight:700}
+.t-stat-card.purple .val{color:var(--purple)}.t-stat-card.green .val{color:var(--green)}.t-stat-card.yellow .val{color:var(--yellow)}.t-stat-card.blue .val{color:var(--blue)}
+
+/* Code generator */
+.t-codegen{background:var(--card);border:2px solid var(--purple);border-radius:var(--radius);padding:1.4rem 1.7rem;margin-bottom:1.8rem}
+.t-codegen-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.7rem}
+.t-codegen-top h3{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--purple)}
+.t-codegen-controls{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+.t-codegen-n{background:var(--card2);border:2px solid var(--border);border-radius:10px;padding:.38rem .7rem;color:var(--text);font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;outline:none;width:70px;transition:border-color .2s}
+.t-codegen-n:focus{border-color:var(--purple)}
+.t-gen-btn{background:linear-gradient(135deg,var(--purple),#5b0ea6);color:#fff;border:none;border-radius:50px;padding:.5rem 1.2rem;font-family:'Fredoka One',cursive;font-size:.9rem;cursor:pointer;transition:all .15s}
+.t-gen-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(188,140,255,.3)}
+.t-copy-btn{background:var(--card2);border:2px solid var(--border);color:var(--muted);border-radius:50px;padding:.5rem 1.1rem;font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:800;cursor:pointer;transition:all .15s}
+.t-copy-btn:hover{border-color:var(--green);color:var(--green)}
+.t-codes-grid{display:flex;flex-wrap:wrap;gap:.5rem}
+.t-code-chip{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:.3rem .75rem;font-family:'Fredoka One',cursive;font-size:.88rem;color:var(--accent);letter-spacing:1.5px}
+.t-codegen-note{margin-top:.75rem;font-size:.76rem;color:var(--muted);font-style:italic}
+
+/* Teacher filters & table */
+.t-filters{display:flex;gap:.55rem;flex-wrap:wrap;margin-bottom:1.3rem}
+.t-filter-btn{background:var(--card2);border:2px solid var(--border);border-radius:50px;padding:.32rem .85rem;font-size:.78rem;font-weight:800;color:var(--muted);cursor:pointer;transition:all .15s}
+.t-filter-btn:hover,.t-filter-btn.active{border-color:var(--purple);color:var(--purple)}
+.t-search{flex:1;min-width:170px;background:var(--card2);border:2px solid var(--border);border-radius:50px;padding:.38rem .95rem;color:var(--text);font-family:'Nunito',sans-serif;font-size:.83rem;font-weight:600;outline:none;transition:border-color .2s}
+.t-search:focus{border-color:var(--purple)}
+.t-table-wrap{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.3rem}
+.t-table-header{display:grid;grid-template-columns:1fr 80px 80px 80px 80px 170px 60px;gap:0;background:var(--card2);border-bottom:2px solid var(--border);padding:.65rem 1.1rem;font-size:.7rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;align-items:center}
+.t-student-row{display:grid;grid-template-columns:1fr 80px 80px 80px 80px 170px 60px;gap:0;padding:.85rem 1.1rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;align-items:center}
+.t-student-row:last-child{border-bottom:none}
+.t-student-row:hover{background:rgba(188,140,255,.04)}
+.t-student-code{font-family:'Fredoka One',cursive;font-size:.92rem;color:var(--accent);letter-spacing:2px}
+.t-student-time{font-size:.72rem;color:var(--muted);margin-top:.12rem;font-weight:600}
+.t-mini-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;font-size:.82rem}
+.t-mini-badge.done{background:rgba(63,185,80,.14);border:1px solid rgba(63,185,80,.28)}
+.t-mini-badge.half{background:rgba(227,179,65,.11);border:1px solid rgba(227,179,65,.24)}
+.t-mini-badge.none{background:var(--card2);border:1px solid var(--border)}
+.t-pts{font-family:'Fredoka One',cursive;font-size:.97rem;color:var(--yellow)}
+.t-taso-badge{font-size:.68rem;font-weight:800;padding:.16rem .48rem;border-radius:99px;background:rgba(188,140,255,.1);color:var(--purple);border:1px solid rgba(188,140,255,.24)}
+
+/* Teacher note field */
+.t-note-input{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:.28rem .6rem;color:var(--text);font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:600;outline:none;width:100%;transition:border-color .2s}
+.t-note-input:focus{border-color:var(--purple)}
+.t-note-input::placeholder{color:var(--muted)}
+
+.t-expand-btn{font-size:.75rem;color:var(--muted);font-weight:700;cursor:pointer;text-align:right;user-select:none}
+.t-detail{background:rgba(188,140,255,.03);border-top:1px solid var(--border);padding:1.1rem 1.4rem;display:none}
+.t-detail.open{display:block;animation:fadeUp .25s ease}
+.t-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.t-moduuli-detail{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:.9rem}
+.t-moduuli-detail h4{font-family:'Fredoka One',cursive;font-size:.88rem;margin-bottom:.65rem}
+.t-moduuli-detail h4.liike{color:var(--blue)}.t-moduuli-detail h4.voima{color:var(--accent)}
+.t-osa-row{display:flex;align-items:center;gap:.55rem;font-size:.8rem;font-weight:600;padding:.28rem 0}
+.t-empty{text-align:center;padding:2.8rem;color:var(--muted)}
+.t-empty .emoji{font-size:2.3rem;margin-bottom:.45rem}
+.t-refresh-btn{background:rgba(188,140,255,.1);border:2px solid var(--purple);color:var(--purple);border-radius:50px;padding:.45rem 1.1rem;font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:800;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:.38rem}
+.t-refresh-btn:hover{background:rgba(188,140,255,.2)}
+.t-refresh-btn.spinning svg{animation:spin 1s linear infinite}
+.t-last-updated{font-size:.73rem;color:var(--muted);font-weight:600}
+
+/* ══ GAME HEADER ══ */
+.g-header{background:linear-gradient(135deg,#161b22,#0d1117);border-bottom:2px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.g-logo{font-family:'Fredoka One',cursive;font-size:1.22rem;color:var(--accent)}
+.g-logo span{color:var(--blue)}
+.g-back-btn{background:var(--card2);border:1px solid var(--border);border-radius:50px;padding:.3rem .82rem;font-size:.76rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s}
+.g-back-btn:hover{border-color:var(--muted);color:var(--text)}
+.hud{display:flex;gap:.55rem;align-items:center;flex-wrap:wrap}
+.hud-item{display:flex;align-items:center;gap:.28rem;background:var(--card2);border:1px solid var(--border);border-radius:50px;padding:.26rem .72rem;font-weight:700;font-size:.8rem}
+.xp-bar-wrap{background:var(--card2);border-bottom:1px solid var(--border);padding:.4rem 2rem;display:flex;align-items:center;gap:.9rem;font-size:.76rem;color:var(--muted);font-weight:600}
+.xp-bar{flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:99px;transition:width .7s cubic-bezier(.34,1.56,.64,1)}
+
+/* ══ GAME PAGES ══ */
+.g-main{max-width:840px;margin:0 auto;padding:2rem 1.5rem 5rem}
+.g-page{display:none}
+.g-page.active{display:block;animation:fadeUp .38s ease}
+
+/* Home */
+.hero-home{text-align:center;padding:1.8rem 1rem .9rem}
+.subject-badge{display:inline-block;background:linear-gradient(135deg,var(--accent),#d4400a);color:#fff;font-family:'Fredoka One',cursive;font-size:.78rem;letter-spacing:2px;padding:.26rem .88rem;border-radius:99px;margin-bottom:.85rem;text-transform:uppercase}
+.hero-home h1{font-family:'Fredoka One',cursive;font-size:clamp(1.85rem,5vw,3.1rem);line-height:1.1;margin-bottom:.5rem;background:linear-gradient(135deg,#e6edf3,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:.9rem;color:var(--muted);max-width:450px;margin:0 auto 1.7rem;line-height:1.7}
+.moduuli-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.05rem;margin-bottom:1.7rem}
+.moduuli-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.5rem 1.25rem;cursor:pointer;transition:all .2s;text-align:center}
+.moduuli-card:hover{transform:translateY(-5px)}
+.moduuli-card.liike:hover{border-color:var(--blue);box-shadow:0 10px 26px rgba(88,166,255,.14)}
+.moduuli-card.voima:hover{border-color:var(--accent);box-shadow:0 10px 26px rgba(247,129,102,.14)}
+.moduuli-ikon{font-size:2.7rem;margin-bottom:.65rem;display:block}
+.moduuli-nimi{font-family:'Fredoka One',cursive;font-size:1.28rem;margin-bottom:.32rem}
+.moduuli-card.liike .moduuli-nimi{color:var(--blue)}
+.moduuli-card.voima .moduuli-nimi{color:var(--accent)}
+.moduuli-kuvaus{font-size:.78rem;color:var(--muted);line-height:1.55;margin-bottom:.85rem}
+.moduuli-status{font-size:.7rem;font-weight:800;padding:.17rem .62rem;border-radius:99px;display:inline-flex;align-items:center;gap:.28rem}
+.status-avoin{background:rgba(88,166,255,.12);color:var(--blue);border:1px solid rgba(88,166,255,.25)}
+.status-kesken{background:rgba(227,179,65,.12);color:var(--yellow);border:1px solid rgba(227,179,65,.3)}
+.status-valmis{background:rgba(63,185,80,.12);color:var(--green);border:1px solid rgba(63,185,80,.3)}
+.moduuli-prog-bar{height:4px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:.25rem}
+.moduuli-prog-fill{height:100%;border-radius:99px;transition:width .5s ease}
+.tasot-row{display:flex;gap:.45rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.5rem}
+.taso-pill{background:var(--card2);border:1px solid var(--border);border-radius:99px;padding:.28rem .75rem;font-size:.73rem;font-weight:700;color:var(--muted)}
+
+/* Module chooser */
+.moduuli-header{display:flex;align-items:center;gap:.85rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.back-btn{background:var(--card2);border:1px solid var(--border);border-radius:50px;padding:.35rem .85rem;font-size:.78rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s}
+.back-btn:hover{border-color:var(--muted);color:var(--text)}
+.moduuli-otsikko{font-family:'Fredoka One',cursive;font-size:1.45rem}
+.moduuli-otsikko.liike{color:var(--blue)}.moduuli-otsikko.voima{color:var(--accent)}
+.section-chooser{display:flex;flex-direction:column;gap:.8rem}
+.section-btn{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.05rem 1.35rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:1.05rem;color:var(--text);text-align:left}
+.section-btn:hover{transform:translateX(4px)}
+.section-btn.teoria:hover{border-color:var(--purple)}
+.section-btn.tehtavat:hover{border-color:var(--yellow)}
+.sec-icon{font-size:1.85rem;flex-shrink:0}
+.sec-nimi{font-family:'Fredoka One',cursive;font-size:.97rem;margin-bottom:.16rem}
+.section-btn.teoria .sec-nimi{color:var(--purple)}
+.section-btn.tehtavat .sec-nimi{color:var(--yellow)}
+.sec-kuvaus{font-size:.76rem;color:var(--muted);line-height:1.5}
+.sec-status{font-size:.7rem;font-weight:800;padding:.17rem .52rem;border-radius:99px;flex-shrink:0}
+.section-btn.teoria .sec-status{background:rgba(188,140,255,.12);color:var(--purple);border:1px solid rgba(188,140,255,.24)}
+.section-btn.tehtavat .sec-status{background:rgba(227,179,65,.12);color:var(--yellow);border:1px solid rgba(227,179,65,.28)}
+
+/* Teoria slides */
+.slide-progress{display:flex;gap:.35rem;justify-content:center;margin-bottom:1.05rem;flex-wrap:wrap}
+.slide-dot{width:24px;height:5px;border-radius:99px;background:var(--border);transition:all .3s}
+.slide-dot.aktiivinen{background:var(--purple);width:36px}
+.slide-dot.valmis{background:var(--green)}
+.slide-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.75rem;margin-bottom:.9rem}
+.slide-numero{font-size:.71rem;font-weight:800;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:.42rem}
+.slide-otsikko{font-family:'Fredoka One',cursive;font-size:1.38rem;color:var(--purple);margin-bottom:.72rem;line-height:1.2}
+.slide-teksti{font-size:.95rem;line-height:1.82;margin-bottom:.88rem}
+.slide-teksti p{margin-bottom:.62rem}
+.highlight-box{border-radius:11px;padding:.92rem 1.18rem;margin:.72rem 0}
+.highlight-box.sininen{background:rgba(88,166,255,.07);border-left:4px solid var(--blue)}
+.highlight-box.vihreä{background:rgba(63,185,80,.07);border-left:4px solid var(--green)}
+.highlight-box.keltainen{background:rgba(227,179,65,.07);border-left:4px solid var(--yellow)}
+.highlight-box.punainen{background:rgba(247,129,102,.07);border-left:4px solid var(--accent)}
+.highlight-box.violetti{background:rgba(188,140,255,.07);border-left:4px solid var(--purple)}
+.highlight-box h4{font-family:'Fredoka One',cursive;font-size:.9rem;margin-bottom:.35rem}
+.highlight-box.sininen h4{color:var(--blue)}.highlight-box.vihreä h4{color:var(--green)}.highlight-box.keltainen h4{color:var(--yellow)}.highlight-box.punainen h4{color:var(--accent)}.highlight-box.violetti h4{color:var(--purple)}
+.highlight-box p,.highlight-box ul{font-size:.85rem;line-height:1.68}
+.highlight-box ul{padding-left:1.05rem}.highlight-box li{margin-bottom:.26rem}
+.formula-box{background:var(--card2);border:2px solid var(--purple);border-radius:12px;padding:1.05rem 1.35rem;margin:.88rem 0;text-align:center}
+.formula-box .formula{font-family:'Fredoka One',cursive;font-size:1.85rem;color:var(--purple);margin-bottom:.32rem;letter-spacing:1px}
+.formula-box .formula-sub{font-size:.78rem;color:var(--muted)}
+.formula-box .formula-parts{display:flex;gap:1.2rem;justify-content:center;flex-wrap:wrap;margin-top:.52rem}
+.formula-part .sym{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--accent)}
+.formula-part .def{font-size:.7rem;color:var(--muted)}
+.anim-box{background:var(--card2);border:2px solid var(--border);border-radius:12px;overflow:hidden;margin:.88rem 0;position:relative;height:108px}
+.anim-box .anim-label{position:absolute;top:7px;left:10px;font-size:.7rem;font-weight:700;color:var(--muted)}
+.anim-car{position:absolute;top:50%;transform:translateY(-60%);font-size:2.2rem;animation:carMove 3s ease-in-out infinite alternate}
+.anim-ball{position:absolute;left:50%;transform:translateX(-50%);font-size:1.85rem;animation:ballFall 1.5s ease-in infinite alternate}
+.speed-labels{position:absolute;bottom:7px;left:0;right:0;display:flex;justify-content:space-between;padding:0 10px;font-size:.68rem;color:var(--muted);font-weight:700}
+.esimerkki-lasku{background:var(--card2);border:2px dashed var(--border);border-radius:12px;padding:1.15rem 1.35rem;margin:.88rem 0}
+.esimerkki-lasku h4{font-family:'Fredoka One',cursive;font-size:.9rem;color:var(--yellow);margin-bottom:.62rem}
+.lasku-step{display:flex;align-items:center;gap:.62rem;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.83rem}
+.lasku-step:last-child{border-bottom:none;font-weight:800;color:var(--green)}
+.lasku-step .ls-label{color:var(--muted);min-width:125px;font-size:.78rem}
+.lasku-step .ls-math{font-family:'Fredoka One',cursive;font-size:.92rem;color:var(--blue)}
+
+/* ══ TEHTÄVÄ SHARED ══ */
+.tehtava-progress{display:flex;gap:.42rem;justify-content:center;margin-bottom:1.05rem;flex-wrap:wrap}
+.t-dot{width:9px;height:9px;border-radius:50%;background:var(--border);transition:all .3s}
+.t-dot.aktiivinen{background:var(--yellow);transform:scale(1.4)}
+.t-dot.valmis{background:var(--green)}
+.tehtava-card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.65rem;margin-bottom:.88rem}
+.type-badge{display:inline-flex;align-items:center;gap:.32rem;font-size:.68rem;font-weight:800;padding:.16rem .62rem;border-radius:99px;margin-bottom:.62rem;text-transform:uppercase;letter-spacing:.5px}
+.tb-mv{background:rgba(88,166,255,.1);color:var(--blue);border:1px solid rgba(88,166,255,.24)}
+.tb-lasku{background:rgba(227,179,65,.1);color:var(--yellow);border:1px solid rgba(227,179,65,.24)}
+.tb-jarjesta{background:rgba(188,140,255,.1);color:var(--purple);border:1px solid rgba(188,140,255,.24)}
+.tb-tayta{background:rgba(63,185,80,.1);color:var(--green);border:1px solid rgba(63,185,80,.24)}
+.tb-slider{background:rgba(88,166,255,.1);color:var(--blue);border:1px solid rgba(88,166,255,.24)}
+.tb-yhdista{background:rgba(247,129,102,.1);color:var(--accent);border:1px solid rgba(247,129,102,.24)}
+.tb-kylla{background:rgba(63,185,80,.1);color:var(--green);border:1px solid rgba(63,185,80,.24)}
+.tb-nimea{background:rgba(188,140,255,.1);color:var(--purple);border:1px solid rgba(188,140,255,.24)}
+.tehtava-otsikko{font-family:'Fredoka One',cursive;font-size:1.12rem;color:var(--yellow);margin-bottom:.52rem}
+.tehtava-teksti{font-size:.93rem;line-height:1.75;margin-bottom:.88rem}
+.pts-badge{background:linear-gradient(135deg,var(--yellow),#c9870a);color:#0d1117;font-weight:800;font-size:.74rem;padding:.16rem .62rem;border-radius:99px;display:inline-block;margin-bottom:.72rem}
+.vinkki{background:rgba(88,166,255,.07);border-left:3px solid var(--blue);border-radius:0 7px 7px 0;padding:.52rem .92rem;font-size:.8rem;color:var(--blue);margin-bottom:.88rem;font-weight:600}
+.palaute{display:none;padding:.52rem .82rem;border-radius:8px;font-size:.83rem;font-weight:700;margin-top:.42rem}
+.palaute.oikein{background:rgba(63,185,80,.1);color:var(--green);display:block;animation:slideIn .2s ease}
+.palaute.vaarin{background:rgba(247,129,102,.1);color:var(--accent);display:block;animation:slideIn .2s ease}
+
+/* Monivalinta */
+.mv-grid{display:grid;grid-template-columns:1fr 1fr;gap:.52rem;margin-bottom:.72rem}
+.mv-btn{background:var(--card2);border:2px solid var(--border);border-radius:10px;padding:.72rem .88rem;color:var(--text);font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s;text-align:left;line-height:1.4}
+.mv-btn:hover:not(:disabled){border-color:var(--blue);background:rgba(88,166,255,.07)}
+.mv-btn.valittu{border-color:var(--blue);background:rgba(88,166,255,.1)}
+.mv-btn.oikein{border-color:var(--green);background:rgba(63,185,80,.1);color:var(--green)}
+.mv-btn.vaarin{border-color:var(--accent);background:rgba(247,129,102,.1);color:var(--accent);animation:shake .4s ease}
+
+/* Lasku */
+.lasku-group{margin-bottom:.72rem}
+.lasku-label{display:block;font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:.3rem}
+.lasku-input{background:var(--card2);border:2px solid var(--border);border-radius:9px;padding:.6rem .92rem;color:var(--text);font-family:'Nunito',sans-serif;font-size:.97rem;font-weight:700;outline:none;transition:border-color .2s;width:100%}
+.lasku-input:focus{border-color:var(--yellow)}
+.lasku-input.oikein{border-color:var(--green);background:rgba(63,185,80,.07)}
+.lasku-input.vaarin{border-color:var(--accent);animation:shake .4s ease}
+
+/* Järjestä */
+.jarjesta-items{display:flex;flex-direction:column;gap:.42rem;margin-bottom:.72rem}
+.jarj-item{background:var(--card2);border:2px solid var(--border);border-radius:9px;padding:.62rem .92rem;cursor:grab;display:flex;align-items:center;gap:.62rem;font-size:.85rem;font-weight:700;transition:all .15s;user-select:none}
+.jarj-item:hover{border-color:var(--purple)}
+.jarj-item.dragging{opacity:.5}
+.jarj-item .drag-handle{color:var(--muted)}
+.jarj-item.oikein{border-color:var(--green);background:rgba(63,185,80,.07)}
+.jarj-item.vaarin{border-color:var(--accent)}
+
+/* Täytä */
+.tayta-teksti{font-size:.95rem;line-height:2.2;margin-bottom:.72rem}
+.tayta-input{background:var(--card2);border:2px solid var(--purple);border-radius:7px;padding:.17rem .52rem;color:var(--purple);font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:800;outline:none;width:105px;display:inline-block;text-align:center;transition:all .2s}
+.tayta-input:focus{border-color:var(--blue);color:var(--blue)}
+.tayta-input.oikein{border-color:var(--green);color:var(--green);background:rgba(63,185,80,.07)}
+.tayta-input.vaarin{border-color:var(--accent);color:var(--accent);animation:shake .4s ease}
+
+/* ══ SLIDER TASK ══ */
+.slider-wrap{background:var(--card2);border:2px solid var(--border);border-radius:14px;padding:1.4rem 1.6rem;margin:.88rem 0}
+.slider-visual{height:90px;position:relative;background:linear-gradient(90deg,rgba(88,166,255,.05),rgba(88,166,255,.12));border-radius:10px;overflow:hidden;margin-bottom:1.2rem}
+.slider-car{position:absolute;top:50%;transform:translateY(-60%);font-size:2.2rem;transition:left .1s linear}
+.slider-road{position:absolute;bottom:12px;left:10px;right:10px;height:3px;background:var(--border);border-radius:99px}
+.slider-road-fill{height:100%;background:var(--blue);border-radius:99px;transition:width .1s linear}
+.slider-dist-label{position:absolute;bottom:2px;right:10px;font-size:.68rem;color:var(--blue);font-weight:700}
+.slider-controls{display:flex;flex-direction:column;gap:.9rem}
+.slider-row{display:flex;align-items:center;gap:.9rem}
+.slider-label{font-size:.8rem;font-weight:800;color:var(--muted);width:110px;flex-shrink:0}
+.slider-input{flex:1;accent-color:var(--blue);height:5px;cursor:pointer}
+.slider-value{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--blue);min-width:80px;text-align:right}
+.slider-result-box{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-top:1rem}
+.slider-result-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.65rem;text-align:center}
+.slider-result-item .val{font-family:'Fredoka One',cursive;font-size:1.35rem;color:var(--accent)}
+.slider-result-item .lbl{font-size:.68rem;color:var(--muted);margin-top:.15rem}
+.slider-question{background:rgba(227,179,65,.08);border:2px solid rgba(227,179,65,.3);border-radius:10px;padding:.75rem 1rem;margin-top:.9rem;font-size:.85rem;font-weight:700;color:var(--yellow)}
+.slider-q-opts{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}
+.slider-q-btn{background:var(--card2);border:2px solid var(--border);border-radius:8px;padding:.38rem .8rem;font-size:.8rem;font-weight:700;cursor:pointer;color:var(--text);transition:all .15s}
+.slider-q-btn:hover:not(:disabled){border-color:var(--blue)}
+.slider-q-btn.oikein{border-color:var(--green);color:var(--green);background:rgba(63,185,80,.1)}
+.slider-q-btn.vaarin{border-color:var(--accent);color:var(--accent)}
+
+/* ══ YHDISTÄ PARIT ══ */
+.yhdista-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:.88rem 0;position:relative}
+.yhdista-col{display:flex;flex-direction:column;gap:.52rem}
+.yhdista-item{background:var(--card2);border:2px solid var(--border);border-radius:10px;padding:.65rem .95rem;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s;user-select:none;position:relative}
+.yhdista-item.left:hover{border-color:var(--accent)}
+.yhdista-item.right:hover{border-color:var(--blue)}
+.yhdista-item.selected-left{border-color:var(--accent);background:rgba(247,129,102,.1);color:var(--accent)}
+.yhdista-item.selected-right{border-color:var(--blue);background:rgba(88,166,255,.1);color:var(--blue)}
+.yhdista-item.matched{border-color:var(--green);background:rgba(63,185,80,.08);cursor:default}
+.yhdista-item.wrong-flash{animation:shake .35s ease;border-color:var(--accent)}
+.yhdista-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.yhdista-line{stroke:var(--green);stroke-width:2;fill:none;opacity:.7}
+
+/* ══ KYLLÄ / EI ══ */
+.vaitama-list{display:flex;flex-direction:column;gap:.6rem;margin:.88rem 0}
+.vaitama-row{display:flex;align-items:center;gap:.7rem;background:var(--card2);border:2px solid var(--border);border-radius:11px;padding:.75rem 1rem;transition:border-color .2s}
+.vaitama-row.oikein{border-color:var(--green)}
+.vaitama-row.vaarin{border-color:var(--accent)}
+.vaitama-teksti{flex:1;font-size:.88rem;font-weight:700;line-height:1.5}
+.vaitama-btns{display:flex;gap:.42rem;flex-shrink:0}
+.vaitama-btn{border:2px solid var(--border);border-radius:8px;padding:.32rem .72rem;font-family:'Nunito',sans-serif;font-size:.78rem;font-weight:800;cursor:pointer;transition:all .15s;background:var(--card)}
+.vaitama-btn.kylla:hover:not(:disabled){border-color:var(--green);color:var(--green)}
+.vaitama-btn.ei:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.vaitama-btn.selected-kylla{border-color:var(--green);background:rgba(63,185,80,.12);color:var(--green)}
+.vaitama-btn.selected-ei{border-color:var(--accent);background:rgba(247,129,102,.12);color:var(--accent)}
+.vaitama-btn.correct{border-color:var(--green);background:rgba(63,185,80,.15);color:var(--green)}
+.vaitama-btn.incorrect{border-color:var(--accent);background:rgba(247,129,102,.15);color:var(--accent)}
+.vaitama-icon{font-size:1.1rem;flex-shrink:0;width:20px}
+
+/* ══ NIMEÄ KUVA ══ */
+.nimea-wrap{position:relative;margin:.88rem 0;user-select:none}
+.nimea-canvas{background:var(--card2);border:2px solid var(--border);border-radius:14px;padding:1.2rem;display:flex;align-items:center;justify-content:center;min-height:220px}
+.nimea-diagram{position:relative;width:100%;max-width:420px;margin:0 auto}
+.nimea-hotspot{position:absolute;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));border:2px solid #fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Fredoka One',cursive;font-size:.8rem;color:#fff;transition:all .2s;z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.nimea-hotspot:hover{transform:scale(1.15)}
+.nimea-hotspot.answered-ok{background:linear-gradient(135deg,var(--green),#1a7a2a)}
+.nimea-hotspot.answered-wrong{background:linear-gradient(135deg,var(--accent),#c94010)}
+.nimea-options{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.9rem;justify-content:center}
+.nimea-opt{background:var(--card2);border:2px solid var(--border);border-radius:8px;padding:.38rem .82rem;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .15s;color:var(--text)}
+.nimea-opt:hover:not(.used){border-color:var(--purple);color:var(--purple)}
+.nimea-opt.used{opacity:.35;cursor:default}
+.nimea-opt.selected{border-color:var(--accent);color:var(--accent);background:rgba(247,129,102,.1)}
+
+/* ══ BUTTONS ══ */
+.btn-row{display:flex;gap:.62rem;justify-content:space-between;align-items:center;margin-top:1.05rem;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:.35rem;padding:.62rem 1.35rem;border-radius:50px;border:none;font-family:'Nunito',sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;transition:all .15s}
+.btn-primary{background:linear-gradient(135deg,var(--blue),#0064c8);color:#fff}
+.btn-primary:hover{transform:translateY(-2px)}
+.btn-success{background:linear-gradient(135deg,var(--green),#1a7a2a);color:#fff}
+.btn-success:hover{transform:translateY(-2px)}
+.btn-yellow{background:linear-gradient(135deg,var(--yellow),#c9870a);color:#0d1117}
+.btn-yellow:hover{transform:translateY(-2px)}
+.btn-ghost{background:var(--card2);border:2px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--muted);color:var(--text)}
+.btn-big{font-family:'Fredoka One',cursive;font-size:1.02rem;padding:.82rem 1.9rem;border-radius:50px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:all .15s;display:inline-flex;align-items:center;gap:.52rem}
+.btn-big.blue{background:linear-gradient(135deg,var(--blue),#0064c8);color:#fff}
+.btn-big.orange{background:linear-gradient(135deg,var(--accent),#c94010);color:#fff}
+.btn-big:hover{transform:translateY(-3px)}
+
+/* ══ POPUP ══ */
+.popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:999;display:none}
+.popup-overlay.nakyva{display:block}
+.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);background:var(--card);border:3px solid var(--yellow);border-radius:22px;padding:1.9rem 2.4rem;text-align:center;z-index:1000;transition:transform .4s cubic-bezier(.34,1.56,.64,1);min-width:245px}
+.popup.nakyva{transform:translate(-50%,-50%) scale(1)}
+.popup .p-emoji{font-size:3.1rem;margin-bottom:.26rem}
+.popup h3{font-family:'Fredoka One',cursive;font-size:1.55rem;color:var(--yellow)}
+.popup .p-pts{font-family:'Fredoka One',cursive;font-size:1.95rem;color:var(--green);margin:.26rem 0}
+.popup p{color:var(--muted);font-size:.85rem}
+
+/* ══ RESULTS ══ */
+.tulos-iso{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:1.75rem;text-align:center;margin-bottom:1.05rem}
+.tulos-pisteet{font-family:'Fredoka One',cursive;font-size:3.1rem;background:linear-gradient(135deg,var(--yellow),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tulo-taso{display:inline-block;font-family:'Fredoka One',cursive;font-size:.9rem;padding:.28rem .95rem;border-radius:99px;margin:.35rem 0 .72rem;background:linear-gradient(135deg,var(--purple),#5b0ea6);color:#fff}
+.tulos-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.72rem;margin-top:1.05rem}
+.t-stat{background:var(--card2);border-radius:10px;padding:.72rem;text-align:center}
+.t-stat .val{font-family:'Fredoka One',cursive;font-size:1.55rem;color:var(--yellow)}
+.t-stat .lab{font-size:.7rem;color:var(--muted);margin-top:.1rem}
+.kertaus-box{background:rgba(63,185,80,.07);border:2px solid var(--green);border-radius:12px;padding:1.05rem 1.35rem;margin:.88rem 0}
+.kertaus-box h4{font-family:'Fredoka One',cursive;color:var(--green);margin-bottom:.52rem}
+.kertaus-item{display:flex;align-items:flex-start;gap:.52rem;font-size:.81rem;margin-bottom:.35rem;line-height:1.5}
+
+.confetti-piece{position:fixed;border-radius:2px;animation:confettiFall linear forwards;z-index:1001;pointer-events:none}
+footer{text-align:center;padding:1.8rem;font-size:.72rem;color:var(--muted);border-top:1px solid var(--border)}
+
+@media(max-width:600px){
+  .moduuli-grid,.mv-grid,.tulos-stats,.p-grid,.t-stats-row,.yhdista-wrap{grid-template-columns:1fr}
+  .t-detail-grid{grid-template-columns:1fr}
+  .t-table-header,.t-student-row{grid-template-columns:1fr 58px 58px 58px}
+  .t-col-taso,.t-col-note,.t-col-expand{display:none}
+  .g-header,.p-topbar,.t-topbar{padding:.78rem 1rem}
+  .g-main,.t-wrap{padding:1.2rem 1rem 3.5rem}
+  .p-wrap,.p-hero{padding-left:1rem;padding-right:1rem}
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Ladataan...</div>
+</div>
+
+<div class="popup-overlay" id="popup-overlay" onclick="suljePopup()"></div>
+<div class="popup" id="popup">
+  <div class="p-emoji" id="p-emoji">🎉</div>
+  <h3 id="p-otsikko">Oikein!</h3>
+  <div class="p-pts" id="p-pts">+10 p</div>
+  <p id="p-teksti"></p><br>
+  <button class="btn btn-success" onclick="suljePopup()">Jatka ▶</button>
+</div>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div class="app-page" id="app-login">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">⚡ Fysiikka<span>Lab</span></div>
+      <div class="login-kurssi">Liike &amp; Voima · 2 osp</div>
+      <div class="login-label">Syötä opiskelijanumerosi</div>
+      <div class="login-sub">Opettajasi on antanut sinulle henkilökohtaisen koodin. Sama koodi toimii kaikilla laitteilla.</div>
+      <input class="login-input" id="login-input" placeholder="esim. XSK-42" maxlength="10"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter')kirjaudu()">
+      <button class="login-btn" onclick="kirjaudu()">▶ Aloita opiskelu</button>
+      <div class="login-err" id="login-err">⚠️ Koodi ei ole kelvollinen. Tarkista opettajaltasi.</div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ PORTAL ══════════════ -->
+<div class="app-page" id="app-portal">
+  <div class="p-topbar">
+    <div class="p-logo">⚡ FysiikkaLab<span></span><small>Fysiikka · 2 osp</small></div>
+    <div class="p-student-badge"><span class="lbl">Koodi:</span><span class="code" id="p-student-code">–</span></div>
+  </div>
+  <div class="p-hero">
+    <div class="p-avatar">🔬</div>
+    <div>
+      <div class="p-hero-tag">Opiskelija · Fysiikka 2 osp</div>
+      <div class="p-hero-nimi">Tervetuloa oppimaan!</div>
+      <div class="p-hero-sub">Teoria ensin tai suoraan tehtäviin — sinä päätät. Edistymisesi tallentuu automaattisesti.</div>
+    </div>
+  </div>
+  <div class="p-wrap">
+    <div class="p-prog-card">
+      <div class="p-prog-top">
+        <span class="p-prog-title">📊 Kokonaisedistyminen</span>
+        <span class="p-prog-pct" id="p-prog-pct">0%</span>
+      </div>
+      <div class="p-big-bar"><div class="p-big-fill" id="p-big-fill" style="width:0%"></div></div>
+      <div class="p-legend">
+        <span><span class="ldot" style="background:var(--green)"></span>Valmis</span>
+        <span><span class="ldot" style="background:var(--purple)"></span>Teoria tehty</span>
+        <span><span class="ldot" style="background:var(--yellow)"></span>Tehtävät tehty</span>
+        <span><span class="ldot" style="background:var(--border)"></span>Ei aloitettu</span>
+      </div>
+    </div>
+    <div class="p-section-label">🗂️ Opintokokonaisuudet</div>
+    <div class="p-grid" id="p-grid"></div>
+  </div>
+  <footer>FysiikkaLab · Fysikaaliset ja kemialliset ilmiöt · 2 osp · 2025–2026</footer>
+</div>
+
+<div class="app-page" id="app-game">
+  <div class="g-header">
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <button class="g-back-btn" onclick="gaanPortaaliin()">← Portaali</button>
+      <div class="g-logo">⚡ Fysiikka<span>Lab</span></div>
+    </div>
+    <div class="hud">
+      <div class="hud-item">⭐ <span id="g-pisteet">0</span> p</div>
+      <div class="hud-item">🏆 <span id="g-taso">Aloittelija</span></div>
+      <div class="hud-item">🔥 <span id="g-streak">0</span></div>
+    </div>
+  </div>
+  <div class="xp-bar-wrap">
+    <span id="xp-nimi">Aloittelija</span>
+    <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    <span id="xp-label">0 / 50 p</span>
+  </div>
+
+  <div class="g-main">
+    <!-- HOME -->
+    <div class="g-page active" id="gp-koti">
+      <div class="hero-home">
+        <div class="subject-badge">YTO · Fysiikka · 2 osp</div>
+        <h1>Liike &amp; Voima ⚡</h1>
+        <div class="hero-sub">Opitaan fysiikkaa käytännön esimerkkien kautta!</div>
+      </div>
+      <div class="moduuli-grid">
+        <div class="moduuli-card liike" onclick="avaaModuuli('liike')">
+          <span class="moduuli-ikon">🚗</span>
+          <div class="moduuli-nimi">Liike</div>
+          <div class="moduuli-kuvaus">Nopeus, matka, aika ja keskinopeus.</div>
+          <div><span class="moduuli-status" id="m-liike-status">▶ Avoin</span></div>
+          <div style="font-size:.7rem;color:var(--muted);font-weight:700;margin-top:.55rem" id="m-liike-txt">0 / 2 osiota</div>
+          <div class="moduuli-prog-bar"><div class="moduuli-prog-fill" id="m-liike-fill" style="width:0%;background:var(--blue)"></div></div>
+        </div>
+        <div class="moduuli-card voima" onclick="avaaModuuli('voima')">
+          <span class="moduuli-ikon">💪</span>
+          <div class="moduuli-nimi">Voima</div>
+          <div class="moduuli-kuvaus">Newtonin lait, F = m × a, painovoima.</div>
+          <div><span class="moduuli-status" id="m-voima-status">▶ Avoin</span></div>
+          <div style="font-size:.7rem;color:var(--muted);font-weight:700;margin-top:.55rem" id="m-voima-txt">0 / 2 osiota</div>
+          <div class="moduuli-prog-bar"><div class="moduuli-prog-fill" id="m-voima-fill" style="width:0%;background:var(--accent)"></div></div>
+        </div>
+      </div>
+      <div class="tasot-row">
+        <span class="taso-pill">🌱 Aloittelija 0–49p</span>
+        <span class="taso-pill">⚙️ Oppilas 50–99p</span>
+        <span class="taso-pill">🔬 Tutkija 100–149p</span>
+        <span class="taso-pill">⚡ Fyysikko 150–199p</span>
+        <span class="taso-pill">🏆 Mestari 200+p</span>
+      </div>
+    </div>
+
+    <!-- MODUULI -->
+    <div class="g-page" id="gp-moduuli">
+      <div class="moduuli-header">
+        <button class="back-btn" onclick="naytaGPage('koti')">← Takaisin</button>
+        <div class="moduuli-otsikko" id="g-mod-otsikko"></div>
+      </div>
+      <div class="section-chooser">
+        <button class="section-btn teoria" onclick="aloitaTeoria()">
+          <div class="sec-icon">📖</div>
+          <div style="flex:1">
+            <div class="sec-nimi">Teoria – Opiskele ensin</div>
+            <div class="sec-kuvaus">Lyhyet selitykset, animaatiot, askel askeleelta.</div>
+          </div>
+          <span class="sec-status" id="g-teoria-status">Aloita</span>
+        </button>
+        <button class="section-btn tehtavat" onclick="aloitaTehtavat()">
+          <div class="sec-icon">✏️</div>
+          <div style="flex:1">
+            <div class="sec-nimi">Tehtävät – Testaa osaaminen</div>
+            <div class="sec-kuvaus">6 eri tehtävätyyppiä: liukusäädin, yhdistä, kyllä/ei, nimeä, lasku ja monivalinta.</div>
+          </div>
+          <span class="sec-status" id="g-tehtavat-status">Aloita</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TEORIA -->
+    <div class="g-page" id="gp-teoria">
+      <div class="moduuli-header">
+        <button class="back-btn" onclick="naytaGPage('moduuli')">← Takaisin</button>
+        <div class="moduuli-otsikko" id="g-teoria-otsikko"></div>
+      </div>
+      <div class="slide-progress" id="g-slide-progress"></div>
+      <div id="g-slide-container"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="g-btn-edellinen" onclick="edellinenSlide()" style="display:none">← Edellinen</button>
+        <div style="display:flex;gap:.62rem">
+          <button class="btn btn-primary" id="g-btn-seuraava" onclick="seuraavaSlide()">Seuraava →</button>
+          <button class="btn btn-success" id="g-btn-teoria-valmis" onclick="teoriaValmis()" style="display:none">✓ Teoria valmis!</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEHTÄVÄT -->
+    <div class="g-page" id="gp-tehtavat">
+      <div class="moduuli-header">
+        <button class="back-btn" onclick="naytaGPage('moduuli')">← Takaisin</button>
+        <div class="moduuli-otsikko" id="g-tehtavat-otsikko"></div>
+      </div>
+      <div class="tehtava-progress" id="g-tehtava-progress"></div>
+      <div id="g-tehtava-nro" style="font-family:'Fredoka One',cursive;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:.72rem;text-align:center"></div>
+      <div id="g-tehtava-container"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="naytaGPage('moduuli')">← Takaisin</button>
+        <div style="display:flex;gap:.62rem">
+          <button class="btn btn-yellow" id="g-btn-tarkista" onclick="tarkistaVastaus()">✓ Tarkista</button>
+          <button class="btn btn-success" id="g-btn-seuraava-t" onclick="seuraavaTehtava()" style="display:none">Seuraava →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TULOKSET -->
+    <div class="g-page" id="gp-tulokset">
+      <div class="moduuli-header">
+        <button class="back-btn" onclick="gaanPortaaliin()">🏠 Portaaliin</button>
+      </div>
+      <div class="tulos-iso">
+        <div style="font-size:2.9rem" id="g-t-emoji">🎉</div>
+        <div class="tulos-pisteet" id="g-t-pisteet">0</div>
+        <div style="color:var(--muted);font-size:.82rem">pistettä</div>
+        <div class="tulo-taso" id="g-t-taso"></div>
+        <p style="color:var(--muted);font-size:.85rem" id="g-t-viesti"></p>
+        <div class="tulos-stats">
+          <div class="t-stat"><div class="val" id="g-t-oikein">0</div><div class="lab">Oikein ✅</div></div>
+          <div class="t-stat"><div class="val" id="g-t-vaarin">0</div><div class="lab">Väärin ❌</div></div>
+          <div class="t-stat"><div class="val" id="g-t-streak">0</div><div class="lab">Putki 🔥</div></div>
+        </div>
+      </div>
+      <div class="kertaus-box" id="g-kertaus-box"></div>
+      <div style="text-align:center;margin-top:1.25rem;display:flex;gap:.85rem;justify-content:center;flex-wrap:wrap">
+        <button class="btn-big blue" onclick="pelaaUudestaan()">🔄 Uudelleen</button>
+        <button class="btn-big orange" onclick="gaanPortaaliin()">🏠 Portaaliin</button>
+      </div>
+    </div>
+  </div>
+</div><!-- /app-game -->
+<script>
+// ═══════════════════════════════════════════════════
+// POWER AUTOMATE URL — vaihda tähän oma URL:si
+// ═══════════════════════════════════════════════════
+const PA_URL = "https://default8fce65e3c62d4510b526ea15adf6e1.84.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c94eda05e7ef48459efa04deda8f48c3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=VmvVedwjy2f2p1bq0IyS2QIr2boktZTaVzKYqowoEJI";
+const PA_HAKU_URL = "https://default8fce65e3c62d4510b526ea15adf6e1.84.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/cb7dacae990943adaee98031475e4962/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=EhW53_UtqOEzq3JguzOV_Br_yxNVpUUG-tXV6eOQa4U";
+const SHEETS_ID = "1F8zpd3aEtKz4h5Dh6c5xs8u2VDf6_hS7yuvDiUMBR8s";
+const SHEETS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT6pLeW8UgxzR5zrnGvA_ehbSlxGT53cRsjaNhx85FLJfCbnYySa-aESAfJJidtskWpKOhiKgEyhyWZ/pub?gid=1537437649&single=true&output=csv";
+
+const FORM_FIELDS = {
+  koodi:          "entry.653375411",
+  pisteet:        "entry.1505110717",
+  oikein:         "entry.1932884180",
+  bestStreak:     "entry.1922337011",
+  liike_teoria:   "entry.2025785006",
+  liike_tehtavat: "entry.1319358416",
+  voima_teoria:   "entry.180599378",
+  voima_tehtavat: "entry.1169336528",
+  paivitetty:     "entry.121147443",
+};
+
+// Hyväksytyt koodit — opettaja lisää ne fysiikka_opettaja.html:stä
+// Tallennetaan localStorage:iin jotta koodit säilyvät latausten välillä
+const LS_CODES = "fysiikkalab_codes";
+
+let opiskelijanKoodi = '';
+let validCodes = new Set();
+let nykyinenTehtavaData = null;
+let yhdistaTila = {valittuVasen:null, yhdistetyt:{}};
+let nimeaTila   = {valittuOpt:null, vastattu:{}};
+let kyllaVastaukset = {};
+
+let tila = {
+  pisteet:0, streak:0, bestStreak:0, oikein:0, vaarin:0,
+  nykyinenModuuli:'liike', nykyinenTehtava:0, nykyinenSlide:0,
+  vastattu:false, valittuMV:null,
+  suoritettu:{liike:{teoria:false,tehtavat:false},voima:{teoria:false,tehtavat:false}},
+};
+
+const TASOT = [
+  {nimi:"Aloittelija",emoji:"🌱",min:0},
+  {nimi:"Oppilas",   emoji:"⚙️",min:50},
+  {nimi:"Tutkija",   emoji:"🔬",min:100},
+  {nimi:"Fyysikko",  emoji:"⚡",min:150},
+  {nimi:"Mestari",   emoji:"🏆",min:200},
+];
+const TASO_MAX = 240;
+
+// ═══════════════════════════════════════════════════
+// KOODIT — ladataan localStorage:sta
+// ═══════════════════════════════════════════════════
+function ladataKoodit(){
+  try{
+    const l = localStorage.getItem(LS_CODES);
+    if(l) JSON.parse(l).forEach(c => validCodes.add(c));
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════════════════
+// POWER AUTOMATE — lähetä data
+// ═══════════════════════════════════════════════════
+async function tallennaGoogleFormsiin(){
+  console.log('🔄 tallennaGoogleFormsiin käynnistyy, koodi:', opiskelijanKoodi);
+  if(!opiskelijanKoodi){ console.warn('❌ Ei opiskelijanKoodia'); return; }
+  const data = {
+    koodi:         opiskelijanKoodi,
+    pisteet:       tila.pisteet,
+    oikein:        tila.oikein,
+    bestStreak:    tila.bestStreak,
+    liike_teoria:  tila.suoritettu.liike.teoria,
+    liike_tehtavat:tila.suoritettu.liike.tehtavat,
+    voima_teoria:  tila.suoritettu.voima.teoria,
+    voima_tehtavat:tila.suoritettu.voima.tehtavat,
+    paivitetty:    new Date().toLocaleString('fi-FI'),
+  };
+  // Tallennetaan localStorage:iin aina — opiskelija jatkaa samalta laitteelta
+  const localData = Object.assign({}, data, {suoritettu: tila.suoritettu});
+  try{ localStorage.setItem('fysiikkalab_'+opiskelijanKoodi, JSON.stringify(localData)); }catch(e){}
+  // Lähetetään Power Automateen
+  if(!PA_URL) return;
+  try{
+    const resp = await fetch(PA_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data),
+    });
+    if(!resp.ok) console.warn('PA vastasi virheellä:', resp.status, resp.statusText);
+    else console.log('✅ Tallennettu Exceliin:', data.koodi, data.pisteet+'p');
+  }catch(e){
+    console.warn('❌ PA-lähetys epäonnistui:', e.message);
+  }
+}
+
+function ladataLocalStorage(koodi){
+  try{
+    const l = localStorage.getItem('fysiikkalab_'+koodi);
+    if(l) return JSON.parse(l);
+  }catch(e){}
+  return null;
+}
+
+// ═══════════════════════════════════════════════════
+// NAVIGAATIO
+// ═══════════════════════════════════════════════════
+function naytaSivu(id){
+  document.querySelectorAll('.app-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('app-'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function naytaGPage(id){
+  document.querySelectorAll('.g-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('gp-'+id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='koti') paivitaKotistatukset();
+}
+function gaanPortaaliin(){
+  console.log('📤 gaanPortaaliin kutsuttu');
+  tallennaGoogleFormsiin();
+  paivitaPortaali();
+  naytaSivu('portal');
+}
+
+// ═══════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════
+async function haeSheetsistaData(koodi){
+  try{
+    const resp = await fetch(PA_HAKU_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({koodi: koodi}),
+    });
+    if(!resp.ok){ console.warn('PA-haku vastasi virheellä:', resp.status); return null; }
+    const data = await resp.json();
+    if(!data || !data.koodi) return null;
+    console.log('✅ Tila haettu Excelistä:', data);
+    return {
+      pisteet:       parseInt(data.pisteet)||0,
+      oikein:        parseInt(data.oikein)||0,
+      bestStreak:    parseInt(data.bestStreak)||0,
+      liike_teoria:  data.liike_teoria===true||data.liike_teoria==='true'||data.liike_teoria==='1',
+      liike_tehtavat:data.liike_tehtavat===true||data.liike_tehtavat==='true'||data.liike_tehtavat==='1',
+      voima_teoria:  data.voima_teoria===true||data.voima_teoria==='true'||data.voima_teoria==='1',
+      voima_tehtavat:data.voima_tehtavat===true||data.voima_tehtavat==='true'||data.voima_tehtavat==='1',
+    };
+  }catch(e){
+    console.warn('PA-haku epäonnistui:', e.message);
+  }
+  return null;
+}
+
+async function kirjaudu(){
+  const val = document.getElementById('login-input').value.trim().toUpperCase();
+  if(!val){ document.getElementById('login-err').style.display='block'; return; }
+  if(validCodes.size > 0 && !validCodes.has(val)){
+    document.getElementById('login-err').style.display='block'; return;
+  }
+  document.getElementById('login-err').style.display='none';
+  document.getElementById('loading-overlay').classList.remove('hidden');
+
+  opiskelijanKoodi = val;
+  document.getElementById('p-student-code').textContent = val;
+
+  // 1. Yritä hakea tila Google Sheetsistä (eri laitteet)
+  let sheetsData = await haeSheetsistaData(val);
+
+  if(sheetsData){
+    console.log('✅ Tila haettu Sheetsistä:', sheetsData);
+    tila.pisteet    = sheetsData.pisteet;
+    tila.oikein     = sheetsData.oikein;
+    tila.bestStreak = sheetsData.bestStreak;
+    tila.suoritettu = {
+      liike:{teoria:sheetsData.liike_teoria, tehtavat:sheetsData.liike_tehtavat},
+      voima:{teoria:sheetsData.voima_teoria, tehtavat:sheetsData.voima_tehtavat},
+    };
+  } else {
+    // 2. Fallback: localStorage (sama laite)
+    const saved = ladataLocalStorage(val);
+    if(saved){
+      console.log('✅ Tila haettu localStorage:sta');
+      tila.pisteet    = saved.pisteet    || 0;
+      tila.oikein     = saved.oikein     || 0;
+      tila.bestStreak = saved.bestStreak || 0;
+      if(saved.suoritettu){
+        tila.suoritettu = saved.suoritettu;
+      } else if(saved.liike_teoria !== undefined){
+        tila.suoritettu = {
+          liike:{teoria:!!saved.liike_teoria, tehtavat:!!saved.liike_tehtavat},
+          voima:{teoria:!!saved.voima_teoria, tehtavat:!!saved.voima_tehtavat},
+        };
+      }
+    } else {
+      console.log('ℹ️ Uusi opiskelija, aloitetaan alusta');
+    }
+  }
+
+  paivitaHUD();
+  paivitaPortaali();
+  document.getElementById('loading-overlay').classList.add('hidden');
+  naytaSivu('portal');
+}
+
+// ═══════════════════════════════════════════════════
+// PORTAL
+// ═══════════════════════════════════════════════════
+const PORTAALI_PAKETIT=[
+  {id:'liike',nimi:'Liike 🚗',luokka:'liike',kuvaus:'Nopeus, matka, aika, keskinopeus. v=s÷t, s=v×t, t=s÷v.',ikoni:'🚗',pisteMax:150},
+  {id:'voima',nimi:'Voima 💪',luokka:'voima',kuvaus:'Newtonin lait, F=m×a, painovoima Fg=m×g.',ikoni:'💪',pisteMax:150},
+  {id:'energia',nimi:'Energia ⚡',luokka:'tulossa',kuvaus:'Tulossa pian.',ikoni:'⚡',pisteMax:150,tulossa:true},
+];
+function paivitaPortaali(){
+  const grid=document.getElementById('p-grid');grid.innerHTML='';
+  let totalOsat=0,suorOsat=0;
+  for(const p of PORTAALI_PAKETIT){
+    if(p.tulossa){
+      grid.innerHTML+=`<div class="p-card tulossa"><div class="p-card-top"><div class="p-card-icon tulossa">${p.ikoni}</div><span class="p-sbadge sb-tulossa">🔒 Tulossa</span></div><div class="p-card-nimi tulossa">${p.nimi}</div><div class="p-card-kuvaus">${p.kuvaus}</div></div>`;
+      continue;
+    }
+    totalOsat+=2;
+    const s=tila.suoritettu[p.id]||{teoria:false,tehtavat:false};
+    const suor=(s.teoria?1:0)+(s.tehtavat?1:0);suorOsat+=suor;
+    const st=suor===2?'valmis':suor>0?'kesken':'avoin';
+    const badge=st==='valmis'?'<span class="p-sbadge sb-valmis">✅ Valmis</span>':st==='kesken'?'<span class="p-sbadge sb-kesken">⏳ Kesken</span>':'<span class="p-sbadge sb-avoin">▶ Avoin</span>';
+    const cta=st==='valmis'?`<span class="p-cta done">✅ Kertaa →</span>`:st==='kesken'?`<span class="p-cta ${p.luokka}">▶ Jatka →</span>`:`<span class="p-cta ${p.luokka}">▶ Aloita →</span>`;
+    const tf=s.teoria?(s.tehtavat?'background:var(--green)':'background:var(--purple)'):'';
+    const tt=s.tehtavat?(s.teoria?'background:var(--green)':'background:var(--yellow)'):'';
+    grid.innerHTML+=`<div class="p-card ${p.luokka}${st==='valmis'?' valmis':''}" onclick="portaaliAvaaPaketti('${p.id}')">
+      <div class="p-card-top"><div class="p-card-icon ${p.luokka}">${p.ikoni}</div>${badge}</div>
+      <div class="p-card-nimi ${p.luokka}">${p.nimi}</div>
+      <div class="p-card-kuvaus">${p.kuvaus}</div>
+      <div class="p-osa-palkit">
+        <div class="p-osa-rivi"><span style="font-size:.78rem;width:14px">${s.teoria?'✅':'⬜'}</span><span class="p-osa-label">Teoria</span><div class="p-osa-bar"><div class="p-osa-fill" style="width:${s.teoria?'100%':'0%'};${tf}"></div></div></div>
+        <div class="p-osa-rivi"><span style="font-size:.78rem;width:14px">${s.tehtavat?'✅':'⬜'}</span><span class="p-osa-label">Tehtävät</span><div class="p-osa-bar"><div class="p-osa-fill" style="width:${s.tehtavat?'100%':'0%'};${tt}"></div></div></div>
+      </div>
+      <div class="p-card-footer"><div class="p-card-pts"><span>${tila.pisteet}</span> / ${p.pisteMax} p</div>${cta}</div>
+    </div>`;
+  }
+  const pct=totalOsat>0?Math.round(suorOsat/totalOsat*100):0;
+  document.getElementById('p-prog-pct').textContent=pct+'%';
+  document.getElementById('p-big-fill').style.width=pct+'%';
+}
+function portaaliAvaaPaketti(id){ avaaModuuli(id); naytaSivu('game'); }
+
+// ═══════════════════════════════════════════════════
+// GAME CORE
+// ═══════════════════════════════════════════════════
+function nykyinenTaso(){let t=TASOT[0];for(const x of TASOT){if(tila.pisteet>=x.min)t=x;}return t;}
+function paivitaHUD(){
+  const t=nykyinenTaso();
+  document.getElementById('g-pisteet').textContent=tila.pisteet;
+  document.getElementById('g-taso').textContent=t.nimi;
+  document.getElementById('g-streak').textContent=tila.streak;
+  document.getElementById('xp-nimi').textContent=t.nimi;
+  const seur=TASOT.find(x=>x.min>tila.pisteet);
+  const min=t.min,max=seur?seur.min:TASO_MAX;
+  const pct=Math.min(100,Math.round((tila.pisteet-min)/(max-min)*100));
+  document.getElementById('xp-fill').style.width=pct+'%';
+  document.getElementById('xp-label').textContent=`${tila.pisteet} / ${max} p`;
+}
+function paivitaKotistatukset(){
+  ['liike','voima'].forEach(m=>{
+    const s=tila.suoritettu[m];const v=(s.teoria?1:0)+(s.tehtavat?1:0);
+    document.getElementById('m-'+m+'-fill').style.width=Math.round(v/2*100)+'%';
+    document.getElementById('m-'+m+'-txt').textContent=v+' / 2 osiota';
+    const el=document.getElementById('m-'+m+'-status');
+    if(v===2){el.textContent='✅ Valmis';el.className='moduuli-status status-valmis';}
+    else if(v>0){el.textContent='⏳ Kesken';el.className='moduuli-status status-kesken';}
+    else{el.textContent='▶ Avoin';el.className='moduuli-status status-avoin';}
+  });
+}
+function avaaModuuli(id){
+  tila.nykyinenModuuli=id;
+  const nimet={liike:'Liike 🚗',voima:'Voima 💪'};
+  document.getElementById('g-mod-otsikko').textContent=nimet[id];
+  document.getElementById('g-mod-otsikko').className='moduuli-otsikko '+id;
+  const s=tila.suoritettu[id];
+  document.getElementById('g-teoria-status').textContent=s.teoria?'✅ Tehty':'Aloita';
+  document.getElementById('g-tehtavat-status').textContent=s.tehtavat?'✅ Tehty':'Aloita';
+  naytaGPage('moduuli');
+}
+
+// ═══════════════════════════════════════════════════
+// GAME CORE
+// ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════
+// TEORIA DATA
+// ═══════════════════════════════════════════════════
+const TEORIA={
+liike:[
+  {otsikko:"Mitä liike tarkoittaa?",html:`<div class="slide-teksti"><p>Liike tarkoittaa, että kappale <strong>muuttaa paikkaansa</strong> ajan kuluessa. Auto, pallo, trukki — kaikki liikkuvat.</p></div><div class="anim-box"><div class="anim-label">Liikkuva auto →</div><div class="anim-car">🚗</div><div class="speed-labels"><span>Lähtöpiste</span><span>Maalipiste</span></div></div><div class="highlight-box sininen"><h4>💡 Muista</h4><p>Liikettä kuvataan kolmella asialla: <strong>matka</strong>, <strong>aika</strong> ja <strong>nopeus</strong>.</p></div>`},
+  {otsikko:"Matka (s) ja aika (t)",html:`<div class="formula-box"><div class="formula">s = matka &nbsp;|&nbsp; t = aika</div><div class="formula-parts"><div class="formula-part"><div class="sym">m / km</div><div class="def">matkan yksiköt</div></div><div class="formula-part"><div class="sym">s / min / h</div><div class="def">ajan yksiköt</div></div></div></div><div class="highlight-box keltainen"><h4>📏 Muunnokset</h4><ul><li>1 km = 1 000 m</li><li>1 h = 60 min = 3 600 s</li></ul></div><div class="highlight-box vihreä"><h4>🏭 Esimerkki</h4><p>Trukkikuski ajaa 30 m varastossa 15 sekunnissa.</p></div>`},
+  {otsikko:"Nopeuden kaava",html:`<div class="slide-teksti"><p>Nopeus kertoo kuinka paljon matkaa kuljetaan yhdessä aikayksikössä. Merkitään kirjaimella <strong>v</strong>.</p></div><div class="formula-box"><div class="formula">v = s ÷ t</div><div class="formula-sub">nopeus = matka ÷ aika</div><div class="formula-parts"><div class="formula-part"><div class="sym">v</div><div class="def">nopeus</div></div><div class="formula-part"><div class="sym">s</div><div class="def">matka</div></div><div class="formula-part"><div class="sym">t</div><div class="def">aika</div></div></div></div><div class="highlight-box violetti"><h4>🔄 Kaikki muodot</h4><ul><li>v = s ÷ t</li><li>s = v × t</li><li>t = s ÷ v</li></ul></div>`},
+  {otsikko:"Esimerkkilasku",html:`<div class="highlight-box sininen"><h4>📋 Tehtävä</h4><p>Auto ajaa 120 km matkan 2 tunnissa. Keskinopeus?</p></div><div class="esimerkki-lasku"><h4>📐 Askel askeleelta</h4><div class="lasku-step"><span class="ls-label">1. Tiedot:</span><span class="ls-math">s=120 km, t=2 h</span></div><div class="lasku-step"><span class="ls-label">2. Kaava:</span><span class="ls-math">v = s ÷ t</span></div><div class="lasku-step"><span class="ls-label">3. Laske:</span><span class="ls-math">v = 120 ÷ 2</span></div><div class="lasku-step"><span class="ls-label">✅ Vastaus:</span><span class="ls-math">v = 60 km/h</span></div></div><div class="highlight-box vihreä"><h4>💡 Muistisääntö</h4><p>km ja h → km/h &nbsp;|&nbsp; m ja s → m/s</p></div>`},
+  {otsikko:"Yksikkömuunnos",html:`<div class="slide-teksti"><p>Fysiikassa nopeus ilmoitetaan usein <strong>m/s</strong>, mutta arjessa käytetään <strong>km/h</strong>. Muunnos on helppo!</p></div><div class="formula-box"><div class="formula">1 m/s = 3,6 km/h</div><div class="formula-parts"><div class="formula-part"><div class="sym">km/h → m/s</div><div class="def">jaa 3,6:lla</div></div><div class="formula-part"><div class="sym">m/s → km/h</div><div class="def">kerro 3,6:lla</div></div></div></div><div class="highlight-box keltainen"><h4>🚗 Esimerkki</h4><ul><li>72 km/h ÷ 3,6 = <strong>20 m/s</strong></li><li>10 m/s × 3,6 = <strong>36 km/h</strong></li></ul></div>`},
+  {otsikko:"Yhteenveto – Liike",html:`<div class="highlight-box sininen"><h4>📚 Kaikki tärkeät asiat</h4><ul><li><strong>Matka (s)</strong> — m tai km</li><li><strong>Aika (t)</strong> — s, min tai h</li><li><strong>Nopeus (v)</strong> — m/s tai km/h</li></ul></div><div class="formula-box"><div class="formula">v = s ÷ t</div><div class="formula-sub">s = v × t &nbsp;|&nbsp; t = s ÷ v</div></div><div class="highlight-box keltainen"><h4>🚀 Seuraavaksi</h4><p>Siirry tehtäviin — kuusi erilaista tehtävätyyppiä odottaa!</p></div>`},
+],
+voima:[
+  {otsikko:"Mitä voima on?",html:`<div class="slide-teksti"><p>Voima on <strong>työntö tai veto</strong>. Se voi saada kappaleen liikkumaan, pysähtymään tai muuttamaan suuntaa.</p></div><div class="anim-box"><div style="position:absolute;left:8%;top:50%;transform:translateY(-50%);font-size:2rem">💪</div><div style="position:absolute;left:22%;top:50%;transform:translateY(-50%);font-size:1.4rem;color:var(--accent)">→</div><div style="position:absolute;left:36%;top:50%;transform:translateY(-50%);font-size:2.2rem">📦</div><div class="anim-label">Voima työntää kappaletta</div></div><div class="highlight-box punainen"><h4>💡 Voima arjessa</h4><ul><li>Potkaiseminen, heittäminen, vetäminen</li><li>Painovoima vetää alas</li><li>Jarru pysäyttää auton</li></ul></div>`},
+  {otsikko:"Newton (N) – voiman yksikkö",html:`<div class="formula-box"><div class="formula">N (Newton)</div><div class="formula-sub">Voiman yksikkö — nimetty Isaac Newtonin mukaan</div><div class="formula-parts"><div class="formula-part"><div class="sym">1 N</div><div class="def">pienen omenan paino</div></div><div class="formula-part"><div class="sym">100 N</div><div class="def">10 kg esine</div></div><div class="formula-part"><div class="sym">1 000 N</div><div class="def">raskas taakka</div></div></div></div><div class="highlight-box sininen"><h4>📦 Muista</h4><p>1 kN (kilonewton) = 1 000 N. Käytetään isoissa voimissa.</p></div>`},
+  {otsikko:"Newtonin kolme lakia",html:`<div class="highlight-box keltainen"><h4>1. laki – Hitauslaki</h4><p>Kappale jatkaa tilaansa, kunnes ulkoinen voima muuttaa sen.</p></div><div class="highlight-box punainen"><h4>2. laki – Voimanlaki</h4><p><strong>F = m × a</strong> — voima = massa × kiihtyvyys</p></div><div class="highlight-box vihreä"><h4>3. laki – Vastavoimat</h4><p>Jokaisella voimalla on yhtä suuri vastavoima vastakkaiseen suuntaan.</p></div>`},
+  {otsikko:"F = m × a",html:`<div class="formula-box"><div class="formula">F = m × a</div><div class="formula-sub">Voima = massa × kiihtyvyys</div><div class="formula-parts"><div class="formula-part"><div class="sym">F</div><div class="def">Voima (N)</div></div><div class="formula-part"><div class="sym">m</div><div class="def">Massa (kg)</div></div><div class="formula-part"><div class="sym">a</div><div class="def">Kiihtyvyys (m/s²)</div></div></div></div><div class="esimerkki-lasku"><h4>📐 Esimerkki</h4><div class="lasku-step"><span class="ls-label">Tiedot:</span><span class="ls-math">m=800 kg, a=2 m/s²</span></div><div class="lasku-step"><span class="ls-label">Kaava:</span><span class="ls-math">F = m × a</span></div><div class="lasku-step"><span class="ls-label">✅ Vastaus:</span><span class="ls-math">F = 1 600 N</span></div></div>`},
+  {otsikko:"Painovoima",html:`<div class="slide-teksti"><p>Painovoima vetää kaikkia kappaleita <strong>maata kohti</strong>. Maapallolla g ≈ <strong>10 m/s²</strong>.</p></div><div class="anim-box"><div class="anim-ball">⚽</div><div style="position:absolute;right:14%;top:16%;font-size:.85rem;color:var(--accent)">↓ painovoima</div></div><div class="formula-box"><div class="formula">Fg = m × g</div><div class="formula-parts"><div class="formula-part"><div class="sym">g ≈ 10 m/s²</div><div class="def">putoamiskiihtyvyys</div></div></div></div><div class="highlight-box keltainen"><h4>📦 Esimerkki</h4><p>10 kg paketti: Fg = 10 × 10 = <strong>100 N</strong></p></div>`},
+  {otsikko:"Yhteenveto – Voima",html:`<div class="highlight-box punainen"><h4>📚 Kaikki tärkeät asiat</h4><ul><li><strong>Voima</strong> — Newton (N)</li><li><strong>1. laki:</strong> Kappale jatkaa tilaansa</li><li><strong>2. laki:</strong> F = m × a</li><li><strong>3. laki:</strong> Vastavoima</li><li><strong>Painovoima:</strong> Fg = m × g, g ≈ 10</li></ul></div><div class="formula-box"><div class="formula">F = m × a</div></div><div class="highlight-box keltainen"><h4>🚀 Seuraavaksi</h4><p>Kuusi erilaista tehtävätyyppiä odottaa!</p></div>`},
+]};
+
+// ═══════════════════════════════════════════════════
+// TEHTÄVÄT DATA  (8 tehtävää per moduuli, 6 eri tyyppiä)
+// ═══════════════════════════════════════════════════
+const TEHTAVAT={
+liike:[
+  // 1. Kyllä/Ei
+  {tyyppi:'kylla',badge:'tb-kylla',otsikko:'Totta vai ei?',pisteet:10,
+   teksti:'Vastaa jokaiseen väittämään: Onko väittämä oikein vai väärin?',
+   vaitamat:[
+     {teksti:'Nopeus = matka ÷ aika',oikein:true},
+     {teksti:'Matkan yksikkö on sekunti',oikein:false},
+     {teksti:'1 km = 1 000 m',oikein:true},
+     {teksti:'Keskinopeus voi olla 0 km/h, vaikka auto liikkuu',oikein:false},
+     {teksti:'s = v × t on matkan kaava',oikein:true},
+   ]},
+  // 2. Liukusäädin
+  {tyyppi:'slider',badge:'tb-slider',otsikko:'Kokeile liikettä!',pisteet:10,
+   teksti:'Säädä nopeutta ja aikaa liukusäätimillä ja katso miten matka muuttuu. Vastaa sitten kysymykseen.',
+   sliderKysymys:'Mikä on matka kun v = 60 km/h ja t = 3 h?',
+   sliderOikein:180, sliderYksikko:'km',
+   sliderVaihtoehdot:['120 km','150 km','180 km','200 km'], sliderOikeinIdx:2},
+  // 3. Yhdistä parit
+  {tyyppi:'yhdista',badge:'tb-yhdista',otsikko:'Yhdistä parit',pisteet:10,
+   teksti:'Yhdistä jokainen suure sen oikeaan yksikköön tai merkintään.',
+   parit:[
+     {vasen:'Nopeus',oikea:'km/h tai m/s'},
+     {vasen:'Matka',oikea:'m tai km'},
+     {vasen:'Aika',oikea:'s, min tai h'},
+     {vasen:'Kaava: v = ?',oikea:'s ÷ t'},
+   ]},
+  // 4. Laskutehtävä
+  {tyyppi:'lasku',badge:'tb-lasku',otsikko:'Laske nopeus',pisteet:15,
+   teksti:'Rekka ajaa 240 km matkan 3 tunnissa. Mikä on keskinopeus?',
+   vinkki:'💡 v = s ÷ t | s = 240 km, t = 3 h',
+   esimerkki:{steps:['s=240 km, t=3 h','v = s ÷ t','v = 240 ÷ 3','v = 80 km/h']},
+   kentat:[{id:'v',label:'Nopeus v = ',placeholder:'80',yksikko:'km/h'}],
+   tarkista:v=>Math.abs(parseFloat(v.v)-80)<2,selitys:'v = 240 ÷ 3 = 80 km/h'},
+  // 5. Täydennä aukot
+  {tyyppi:'tayta',badge:'tb-tayta',otsikko:'Täydennä kaavat',pisteet:10,
+   teksti:'Kirjoita puuttuvat osat kaavaan:',
+   tayta_html:`<div class="tayta-teksti">
+     Matka: s = <input class="tayta-input" id="tayta-0" placeholder="?"> × t<br>
+     Aika:  t = s ÷ <input class="tayta-input" id="tayta-1" placeholder="?">
+   </div>`,
+   oikein:[['v','nopeus'],['v','nopeus']],
+   selitys:'s = v × t ja t = s ÷ v'},
+  // 6. Monivalinta
+  {tyyppi:'mv',badge:'tb-mv',otsikko:'Yksikkömuunnos',pisteet:10,
+   teksti:'Juna kulkee 216 km/h. Kuinka monta m/s tämä on?',
+   vinkki:'💡 Jaa km/h luvulla 3,6 saadaksesi m/s',
+   vaihtoehdot:[{id:'A',teksti:'A) 60 m/s'},{id:'B',teksti:'B) 77,8 m/s'},{id:'C',teksti:'C) 6 m/s'},{id:'D',teksti:'D) 600 m/s'}],
+   oikein:'A',selitys:'216 ÷ 3,6 = 60 m/s'},
+  // 7. Nimeä kuvan kohdat
+  {tyyppi:'nimea',badge:'tb-nimea',otsikko:'Nimeä kaavan osat',pisteet:10,
+   teksti:'Klikkaa ensin numeroa, sitten oikeaa vastausta alta.',
+   diagramHTML:`<div style="font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--purple);text-align:center;padding:1.5rem;letter-spacing:4px;position:relative">
+     <span style="color:var(--blue)">v</span>
+     <span style="color:var(--muted);font-size:1.5rem;margin:0 .5rem">=</span>
+     <span style="position:relative;display:inline-block">
+       <span class="nimea-hotspot" id="hs-0" style="position:relative;top:auto;left:auto;display:inline-flex;margin:0 .2rem;transform:none;box-shadow:none;width:30px;height:30px;font-size:.85rem" onclick="valitseHotspot(0)">1</span>
+     </span>
+     <span style="color:var(--muted);font-size:1.5rem;margin:0 .5rem">÷</span>
+     <span style="position:relative;display:inline-block">
+       <span class="nimea-hotspot" id="hs-1" style="position:relative;top:auto;left:auto;display:inline-flex;margin:0 .2rem;transform:none;box-shadow:none;width:30px;height:30px;font-size:.85rem" onclick="valitseHotspot(1)">2</span>
+     </span>
+   </div>`,
+   hotspotOikein:['s (matka)','t (aika)'],
+   vaihtoehdot:['v (nopeus)','s (matka)','t (aika)','a (kiihtyvyys)'],
+   selitys:'v = s ÷ t. Kohta 1 = s (matka), kohta 2 = t (aika).'},
+  // 8. Järjestä
+  {tyyppi:'jarjesta',badge:'tb-jarjesta',otsikko:'Järjestä laskun vaiheet',pisteet:10,
+   teksti:'Järjestä oikeaan järjestykseen: Laske aika kun s = 150 km ja v = 50 km/h.',
+   jarj_items:['t = 150 ÷ 50 = 3 h','Kaava: t = s ÷ v','Tiedot: s=150 km, v=50 km/h','Vastaus: t = 3 h ✅'],
+   oikein_jarjestys:[2,1,0,3],selitys:'1) Tiedot 2) Kaava 3) Laske 4) Vastaus'},
+],
+voima:[
+  // 1. Kyllä/Ei
+  {tyyppi:'kylla',badge:'tb-kylla',otsikko:'Totta vai ei?',pisteet:10,
+   teksti:'Vastaa jokaiseen väittämään: Onko väittämä oikein vai väärin?',
+   vaitamat:[
+     {teksti:'Voiman yksikkö on Newton (N)',oikein:true},
+     {teksti:'F = m + a on Newtonin 2. laki',oikein:false},
+     {teksti:'Painovoima vetää kappaleita maata kohti',oikein:true},
+     {teksti:'Newtonin 1. lain mukaan kappale hidastuu aina itsestään',oikein:false},
+     {teksti:'1 kN = 1 000 N',oikein:true},
+   ]},
+  // 2. Yhdistä parit
+  {tyyppi:'yhdista',badge:'tb-yhdista',otsikko:'Yhdistä Newtonin lait',pisteet:10,
+   teksti:'Yhdistä jokainen laki sen sisältöön.',
+   parit:[
+     {vasen:'Newtonin 1. laki',oikea:'Kappale jatkaa tilaansa'},
+     {vasen:'Newtonin 2. laki',oikea:'F = m × a'},
+     {vasen:'Newtonin 3. laki',oikea:'Vastavoima'},
+     {vasen:'Painovoima',oikea:'Fg = m × g'},
+   ]},
+  // 3. Liukusäädin
+  {tyyppi:'slider',badge:'tb-slider',otsikko:'Kokeile painovoimaa!',pisteet:10,
+   teksti:'Säädä massaa liukusäätimellä ja katso miten painovoima muuttuu. Vastaa sitten kysymykseen.',
+   sliderKysymys:'Mikä on 50 kg esineen painovoima? (g = 10 m/s²)',
+   sliderOikein:500, sliderYksikko:'N',
+   sliderVaihtoehdot:['50 N','250 N','500 N','5 000 N'], sliderOikeinIdx:2},
+  // 4. Laskutehtävä
+  {tyyppi:'lasku',badge:'tb-lasku',otsikko:'Laske voima',pisteet:15,
+   teksti:'Trukki kiihdyttää 1 200 kg kuormaa kiihtyvyydellä 1,5 m/s². Kuinka suuri voima tarvitaan?',
+   vinkki:'💡 F = m × a | m=1200 kg, a=1,5 m/s²',
+   esimerkki:{steps:['m=1200 kg, a=1,5 m/s²','F = m × a','F = 1200 × 1,5','F = 1 800 N']},
+   kentat:[{id:'f',label:'Voima F = ',placeholder:'1800',yksikko:'N'}],
+   tarkista:v=>Math.abs(parseFloat(v.f)-1800)<60,selitys:'F = 1200 × 1,5 = 1 800 N'},
+  // 5. Nimeä kuvan kohdat
+  {tyyppi:'nimea',badge:'tb-nimea',otsikko:'Nimeä voimakaavio',pisteet:10,
+   teksti:'Alla on voimakaavio. Nimeä nuolten tarkoittamat voimat.',
+   diagramHTML:`<div style="position:relative;width:200px;height:160px;margin:0 auto">
+     <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:50px;height:50px;background:var(--card2);border:2px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.6rem">📦</div>
+     <div style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:1.6rem;color:var(--green)">↑</div>
+     <span class="nimea-hotspot" id="hs-0" style="top:2px;left:calc(50% + 18px);width:24px;height:24px;font-size:.72rem" onclick="valitseHotspot(0)">1</span>
+     <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:1.6rem;color:var(--accent)">↓</div>
+     <span class="nimea-hotspot" id="hs-1" style="bottom:2px;left:calc(50% + 18px);width:24px;height:24px;font-size:.72rem" onclick="valitseHotspot(1)">2</span>
+     <div style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:1.6rem;color:var(--blue)">→</div>
+     <span class="nimea-hotspot" id="hs-2" style="left:2px;top:calc(50% + 18px);width:24px;height:24px;font-size:.72rem" onclick="valitseHotspot(2)">3</span>
+   </div>`,
+   hotspotOikein:['Nostovoima (↑)','Painovoima (↓)','Liikevoima (→)'],
+   vaihtoehdot:['Nostovoima (↑)','Painovoima (↓)','Liikevoima (→)','Kitkavoima (←)','Normaalivoima'],
+   selitys:'1=Nostovoima, 2=Painovoima, 3=Liikevoima'},
+  // 6. Täydennä aukot
+  {tyyppi:'tayta',badge:'tb-tayta',otsikko:'Täydennä kaavat',pisteet:10,
+   teksti:'Kirjoita puuttuvat osat kaavaan:',
+   tayta_html:`<div class="tayta-teksti">
+     Voima: F = <input class="tayta-input" id="tayta-0" placeholder="?"> × a<br>
+     Painovoima: Fg = m × <input class="tayta-input" id="tayta-1" placeholder="?">
+   </div>`,
+   oikein:[['m','massa'],['g','10']],
+   selitys:'F = m × a ja Fg = m × g'},
+  // 7. Monivalinta
+  {tyyppi:'mv',badge:'tb-mv',otsikko:'Nostolaite',pisteet:10,
+   teksti:'Nostolaite nostaa 400 kg kuormaa. Kuinka suuri on kuorman painovoima? (g=10 m/s²)',
+   vinkki:'💡 Fg = m × g',
+   vaihtoehdot:[{id:'A',teksti:'A) 40 N'},{id:'B',teksti:'B) 400 N'},{id:'C',teksti:'C) 4 000 N'},{id:'D',teksti:'D) 40 000 N'}],
+   oikein:'C',selitys:'Fg = 400 × 10 = 4 000 N'},
+  // 8. Järjestä
+  {tyyppi:'jarjesta',badge:'tb-jarjesta',otsikko:'Järjestä Newtonin lait',pisteet:10,
+   teksti:'Järjestä lait oikeaan järjestykseen (1→3) ja sijoita oikein.',
+   jarj_items:['F = m × a (voiman laki)','Vastavoima vastakkaiseen suuntaan','Kappale jatkaa tilaansa'],
+   oikein_jarjestys:[2,0,1],selitys:'1.laki: jatkaa tilaansa | 2.laki: F=ma | 3.laki: vastavoima'},
+]};
+
+// ═══════════════════════════════════════════════════
+// TEORIA RENDER
+// ═══════════════════════════════════════════════════
+function aloitaTeoria(){
+  tila.nykyinenSlide=0;
+  const m=tila.nykyinenModuuli;
+  document.getElementById('g-teoria-otsikko').textContent=m==='liike'?'📖 Teoria – Liike':'📖 Teoria – Voima';
+  document.getElementById('g-teoria-otsikko').className='moduuli-otsikko '+m;
+  renderSlide(); naytaGPage('teoria');
+}
+function renderSlide(){
+  const slides=TEORIA[tila.nykyinenModuuli],idx=tila.nykyinenSlide,total=slides.length;
+  const dots=document.getElementById('g-slide-progress');
+  dots.innerHTML='';
+  for(let i=0;i<total;i++){const d=document.createElement('div');d.className='slide-dot'+(i<idx?' valmis':i===idx?' aktiivinen':'');dots.appendChild(d);}
+  document.getElementById('g-slide-container').innerHTML=`<div class="slide-card"><div class="slide-numero">Dia ${idx+1} / ${total}</div><div class="slide-otsikko">${slides[idx].otsikko}</div>${slides[idx].html}</div>`;
+  document.getElementById('g-btn-edellinen').style.display=idx>0?'inline-flex':'none';
+  document.getElementById('g-btn-seuraava').style.display=idx<total-1?'inline-flex':'none';
+  document.getElementById('g-btn-teoria-valmis').style.display=idx===total-1?'inline-flex':'none';
+}
+function seuraavaSlide(){if(tila.nykyinenSlide<TEORIA[tila.nykyinenModuuli].length-1){tila.nykyinenSlide++;renderSlide();window.scrollTo(0,0);}}
+function edellinenSlide(){if(tila.nykyinenSlide>0){tila.nykyinenSlide--;renderSlide();window.scrollTo(0,0);}}
+function teoriaValmis(){tila.suoritettu[tila.nykyinenModuuli].teoria=true;tallennaGoogleFormsiin();naytaGPage('moduuli');document.getElementById('g-teoria-status').textContent='✅ Tehty';}
+
+// ═══════════════════════════════════════════════════
+// TEHTÄVÄT RENDER
+// ═══════════════════════════════════════════════════
+function aloitaTehtavat(){
+  tila.nykyinenTehtava=0;tila.vastattu=false;tila.valittuMV=null;
+  tila.oikein=0;tila.vaarin=0;tila.streak=0;
+  const m=tila.nykyinenModuuli;
+  document.getElementById('g-tehtavat-otsikko').textContent=m==='liike'?'✏️ Tehtävät – Liike':'✏️ Tehtävät – Voima';
+  document.getElementById('g-tehtavat-otsikko').className='moduuli-otsikko '+m;
+  renderTehtava(); naytaGPage('tehtavat');
+}
+
+function renderTehtava(){
+  tila.vastattu=false;tila.valittuMV=null;
+  yhdistaTila={valittuVasen:null,yhdistetyt:{}};
+  nimeaTila={valittuOpt:null,vastattu:{}};
+  const tehtavat=TEHTAVAT[tila.nykyinenModuuli],idx=tila.nykyinenTehtava,t=tehtavat[idx];
+  nykyinenTehtavaData=t;
+  document.getElementById('g-tehtava-nro').textContent=`Tehtävä ${idx+1} / ${tehtavat.length}`;
+  document.getElementById('g-btn-tarkista').style.display='inline-flex';
+  document.getElementById('g-btn-seuraava-t').style.display='none';
+
+  const dots=document.getElementById('g-tehtava-progress');dots.innerHTML='';
+  for(let i=0;i<tehtavat.length;i++){const d=document.createElement('div');d.className='t-dot'+(i<idx?' valmis':i===idx?' aktiivinen':'');dots.appendChild(d);}
+
+  const tyyppinimet={mv:'📋 Monivalinta',lasku:'🔢 Laskutehtävä',jarjesta:'🔀 Järjestä',tayta:'✏️ Täydennä',slider:'🎚️ Liukusäädin',yhdista:'🔗 Yhdistä parit',kylla:'✅ Kyllä / Ei',nimea:'🖼️ Nimeä kohdat'};
+  let html=`<div class="tehtava-card"><div class="type-badge ${t.badge}">${tyyppinimet[t.tyyppi]||''}</div><div class="pts-badge">+${t.pisteet} p</div><div class="tehtava-otsikko">${t.otsikko}</div><div class="tehtava-teksti">${t.teksti}</div>`;
+  if(t.vinkki) html+=`<div class="vinkki">${t.vinkki}</div>`;
+  if(t.tyyppi==='lasku'&&t.esimerkki) html+=`<details style="margin-bottom:.88rem"><summary style="cursor:pointer;font-size:.8rem;font-weight:700;color:var(--yellow);padding:.35rem 0">💡 Näytä esimerkki</summary><div class="esimerkki-lasku" style="margin-top:.4rem"><h4>📐 Kaava:</h4>${t.esimerkki.steps.map((s,i)=>`<div class="lasku-step"><span class="ls-label">Vaihe ${i+1}:</span><span class="ls-math">${s}</span></div>`).join('')}</div></details>`;
+
+  switch(t.tyyppi){
+    case 'mv':
+      html+=`<div class="mv-grid">${t.vaihtoehdot.map(v=>`<button class="mv-btn" id="mv-${v.id}" onclick="valitseMV('${v.id}')">${v.teksti}</button>`).join('')}</div><div class="palaute" id="palaute-mv"></div>`;
+      break;
+    case 'lasku':
+      html+=t.kentat.map(k=>`<div class="lasku-group"><label class="lasku-label">${k.label}</label><div style="display:flex;align-items:center;gap:.52rem"><input class="lasku-input" id="linp-${k.id}" type="number" step="any" placeholder="${k.placeholder}" style="max-width:170px"><span style="font-weight:700;color:var(--muted)">${k.yksikko}</span></div><div class="palaute" id="lpalaute-${k.id}"></div></div>`).join('');
+      break;
+    case 'tayta':
+      html+=t.tayta_html+`<div class="palaute" id="palaute-tayta"></div>`;
+      break;
+    case 'jarjesta':
+      html+=`<div class="jarjesta-items" id="jarj-list">${t.jarj_items.map((item,i)=>`<div class="jarj-item" id="jarj-${i}" draggable="true" data-idx="${i}"><span class="drag-handle">⠿</span>${item}</div>`).join('')}</div><div class="palaute" id="palaute-jarjesta"></div>`;
+      break;
+    case 'slider':
+      html+=renderSliderHTML(t);
+      break;
+    case 'yhdista':
+      html+=renderYhdistaHTML(t);
+      break;
+    case 'kylla':
+      html+=renderKyllaHTML(t);
+      break;
+    case 'nimea':
+      html+=`<div class="nimea-canvas">${t.diagramHTML}</div><div class="nimea-options" id="nimea-opts">${t.vaihtoehdot.map((v,i)=>`<div class="nimea-opt" id="nopt-${i}" onclick="valitseNimeaOpt(${i},'${v}')">${v}</div>`).join('')}</div><div class="palaute" id="palaute-nimea"></div>`;
+      break;
+  }
+  html+=`</div>`;
+  document.getElementById('g-tehtava-container').innerHTML=html;
+  if(t.tyyppi==='jarjesta') initDrag();
+  if(t.tyyppi==='slider') initSlider(t);
+}
+
+// ── Slider ──
+function renderSliderHTML(t){
+  return `<div class="slider-wrap">
+    <div class="slider-visual">
+      <div class="slider-car" id="sl-car" style="left:4%">${t.sliderYksikko==='km'?'🚗':'📦'}</div>
+      <div class="slider-road"><div class="slider-road-fill" id="sl-road-fill" style="width:0%"></div></div>
+      <div class="slider-dist-label" id="sl-dist-label">0 ${t.sliderYksikko}</div>
+    </div>
+    <div class="slider-controls">
+      <div class="slider-row">
+        <span class="slider-label">${t.sliderYksikko==='km'?'🚗 Nopeus:':'📦 Massa:'}</span>
+        <input type="range" class="slider-input" id="sl-a" min="10" max="120" value="60" oninput="updateSlider()">
+        <span class="slider-value" id="sl-a-val">60 ${t.sliderYksikko==='km'?'km/h':'kg'}</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">${t.sliderYksikko==='km'?'⏱️ Aika:':'⚡ g ≈'}</span>
+        <input type="range" class="slider-input" id="sl-b" min="1" max="6" value="3" ${t.sliderYksikko!=='km'?'disabled':''} oninput="updateSlider()">
+        <span class="slider-value" id="sl-b-val">${t.sliderYksikko==='km'?'3 h':'10 m/s²'}</span>
+      </div>
+    </div>
+    <div class="slider-result-box">
+      <div class="slider-result-item"><div class="val" id="sl-r1">–</div><div class="lbl">${t.sliderYksikko==='km'?'Nopeus (km/h)':'Massa (kg)'}</div></div>
+      <div class="slider-result-item"><div class="val" id="sl-r2">–</div><div class="lbl">${t.sliderYksikko==='km'?'Aika (h)':'g (m/s²)'}</div></div>
+      <div class="slider-result-item" style="border-color:var(--accent)"><div class="val" id="sl-r3" style="color:var(--accent)">–</div><div class="lbl">${t.sliderYksikko==='km'?'Matka (km)':'Painovoima (N)'}</div></div>
+    </div>
+    <div class="slider-question">❓ ${t.sliderKysymys}<div class="slider-q-opts">${t.sliderVaihtoehdot.map((v,i)=>`<button class="slider-q-btn" id="sqb-${i}" onclick="valitseSliderQ(${i},${t.sliderOikeinIdx})">${v}</button>`).join('')}</div></div>
+    <div class="palaute" id="palaute-slider"></div>
+  </div>`;
+}
+
+function initSlider(t){updateSlider();}
+function updateSlider(){
+  const t=nykyinenTehtavaData;if(!t||t.tyyppi!=='slider') return;
+  const slA=document.getElementById('sl-a');if(!slA) return;
+  const a=parseFloat(slA.value);
+  const slB=document.getElementById('sl-b');
+  const b=slB&&!slB.disabled?parseFloat(slB.value):10;
+  const result=t.sliderYksikko==='km'?a*b:a*b;
+  const maxResult=t.sliderYksikko==='km'?120*6:120*10;
+  const pct=Math.min(100,(result/maxResult)*100);
+  const carEl=document.getElementById('sl-car');
+  if(carEl) carEl.style.left=(4+pct*0.72)+'%';
+  const roadEl=document.getElementById('sl-road-fill');
+  if(roadEl) roadEl.style.width=pct+'%';
+  const distEl=document.getElementById('sl-dist-label');
+  if(distEl) distEl.textContent=Math.round(result)+' '+t.sliderYksikko;
+  const r1=document.getElementById('sl-r1');if(r1) r1.textContent=a+(t.sliderYksikko==='km'?' km/h':' kg');
+  const r2=document.getElementById('sl-r2');if(r2) r2.textContent=t.sliderYksikko==='km'?b+' h':'10 m/s²';
+  const r3=document.getElementById('sl-r3');if(r3) r3.textContent=Math.round(result)+' '+t.sliderYksikko;
+  const lv=document.getElementById('sl-a-val');if(lv) lv.textContent=a+(t.sliderYksikko==='km'?' km/h':' kg');
+  const lv2=document.getElementById('sl-b-val');if(lv2&&t.sliderYksikko==='km') lv2.textContent=b+' h';
+}
+
+function valitseSliderQ(i,oikeinIdx){
+  if(tila.vastattu) return;
+  const btns=document.querySelectorAll('.slider-q-btn');
+  btns.forEach(b=>{b.disabled=true;});
+  btns[i].classList.add(i===oikeinIdx?'oikein':'vaarin');
+  if(i!==oikeinIdx) btns[oikeinIdx].classList.add('oikein');
+  const p=document.getElementById('palaute-slider');
+  const ok=i===oikeinIdx;
+  p.className='palaute '+(ok?'oikein':'vaarin');
+  p.textContent=ok?'✅ Oikein! '+nykyinenTehtavaData.selitys||'':'❌ Ei ihan. Katso kaava uudestaan.';
+  viimeistelyTehtava(ok);
+}
+
+// ── Yhdistä parit ──
+function renderYhdistaHTML(t){
+  const shuffledOikea=[...t.parit.map(p=>p.oikea)].sort(()=>Math.random()-.5);
+  return `<div class="yhdista-wrap">
+    <div class="yhdista-col" id="yhdista-vasen">${t.parit.map((p,i)=>`<div class="yhdista-item left" id="yv-${i}" data-idx="${i}" onclick="valitseYhdista('vasen',${i})">${p.vasen}</div>`).join('')}</div>
+    <div class="yhdista-col" id="yhdista-oikea">${shuffledOikea.map((v,i)=>`<div class="yhdista-item right" id="yo-${i}" data-val="${v}" onclick="valitseYhdista('oikea',${i},'${v.replace(/'/g,"\\'")}')">${v}</div>`).join('')}</div>
+  </div><div class="palaute" id="palaute-yhdista"></div>`;
+}
+
+function valitseYhdista(puoli, idx, val){
+  if(tila.vastattu) return;
+  const t=nykyinenTehtavaData;
+  if(puoli==='vasen'){
+    // deselect prev
+    document.querySelectorAll('.yhdista-item.left').forEach(el=>el.classList.remove('selected-left'));
+    if(yhdistaTila.valittuVasen===idx){yhdistaTila.valittuVasen=null;return;}
+    if(document.getElementById('yv-'+idx)?.classList.contains('matched')) return;
+    yhdistaTila.valittuVasen=idx;
+    document.getElementById('yv-'+idx)?.classList.add('selected-left');
+  } else {
+    if(yhdistaTila.valittuVasen===null) return;
+    if(document.getElementById('yo-'+idx)?.classList.contains('matched')) return;
+    const vasIdx=yhdistaTila.valittuVasen;
+    const oikeaOikein=t.parit[vasIdx].oikea;
+    const match=val===oikeaOikein;
+    if(match){
+      document.getElementById('yv-'+vasIdx)?.classList.remove('selected-left');
+      document.getElementById('yv-'+vasIdx)?.classList.add('matched');
+      document.getElementById('yo-'+idx)?.classList.add('matched');
+      yhdistaTila.yhdistetyt[vasIdx]=val;
+      yhdistaTila.valittuVasen=null;
+      // Check all matched
+      if(Object.keys(yhdistaTila.yhdistetyt).length===t.parit.length){
+        const p=document.getElementById('palaute-yhdista');
+        p.className='palaute oikein';p.textContent='✅ Kaikki parit yhdistetty oikein!';
+        viimeistelyTehtava(true);
+      }
+    } else {
+      const el=document.getElementById('yo-'+idx);
+      el?.classList.add('wrong-flash');
+      setTimeout(()=>el?.classList.remove('wrong-flash'),400);
+      document.querySelectorAll('.yhdista-item.left').forEach(e=>e.classList.remove('selected-left'));
+      yhdistaTila.valittuVasen=null;
+    }
+  }
+}
+
+// ── Kyllä/Ei ──
+function renderKyllaHTML(t){
+  return `<div class="vaitama-list">${t.vaitamat.map((v,i)=>`
+    <div class="vaitama-row" id="vr-${i}">
+      <span class="vaitama-icon" id="vi-${i}">❓</span>
+      <span class="vaitama-teksti">${v.teksti}</span>
+      <div class="vaitama-btns">
+        <button class="vaitama-btn kylla" id="vbk-${i}" onclick="vastaaKylla(${i},true)">Kyllä ✓</button>
+        <button class="vaitama-btn ei" id="vbe-${i}" onclick="vastaaKylla(${i},false)">Ei ✗</button>
+      </div>
+    </div>`).join('')}</div><div class="palaute" id="palaute-kylla"></div>`;
+}
+
+// kyllaVastaukset already declared above
+
+function vastaaKylla(i,vastaus){
+  if(tila.vastattu) return;
+  const t=nykyinenTehtavaData;
+  kyllaVastaukset[i]=vastaus;
+  // Visual feedback per row (don't lock yet — let user change)
+  const btnK=document.getElementById('vbk-'+i);
+  const btnE=document.getElementById('vbe-'+i);
+  btnK.className='vaitama-btn kylla'+(vastaus?' selected-kylla':'');
+  btnE.className='vaitama-btn ei'+(!vastaus?' selected-ei':'');
+  // Check if all answered
+  if(Object.keys(kyllaVastaukset).length===t.vaitamat.length){
+    // Auto-check after last answer
+    // (user can still change before clicking Tarkista)
+  }
+}
+
+// ── Nimeä kohdat ──
+function valitseHotspot(idx){
+  if(nimeaTila.vastattu[idx]!==undefined) return;
+  nimeaTila.valituHotspot=idx;
+  document.querySelectorAll('.nimea-hotspot').forEach((el,i)=>{
+    if(nimeaTila.vastattu[i]!==undefined) return;
+    el.style.background=i===idx?'linear-gradient(135deg,#e3b341,#c9870a)':'linear-gradient(135deg,var(--accent),var(--purple))';
+  });
+  // Highlight selected option if any
+  const selOpt=nimeaTila.valittuOpt;
+  if(selOpt!==null) document.querySelectorAll('.nimea-opt').forEach(el=>el.classList.remove('selected'));
+}
+
+function valitseNimeaOpt(i, val){
+  if(tila.vastattu) return;
+  const t=nykyinenTehtavaData;
+  const hsIdx=nimeaTila.valituHotspot;
+  if(hsIdx===undefined||hsIdx===null) return;
+  if(nimeaTila.vastattu[hsIdx]!==undefined) return;
+  if(document.getElementById('nopt-'+i)?.classList.contains('used')) return;
+
+  const correct=val===t.hotspotOikein[hsIdx];
+  const hsEl=document.getElementById('hs-'+hsIdx);
+  if(hsEl){
+    hsEl.classList.add(correct?'answered-ok':'answered-wrong');
+    hsEl.textContent=correct?'✓':'✗';
+    hsEl.style.background='';
+  }
+  if(correct){
+    document.getElementById('nopt-'+i)?.classList.add('used');
+    nimeaTila.vastattu[hsIdx]=true;
+  } else {
+    // Flash wrong
+    hsEl?.classList.remove('answered-wrong');
+    setTimeout(()=>hsEl?.classList.add('answered-wrong'),50);
+    setTimeout(()=>{hsEl?.classList.remove('answered-wrong');if(hsEl)hsEl.textContent=hsIdx+1;hsEl.style.background='';},600);
+  }
+  nimeaTila.valituHotspot=null;
+  document.querySelectorAll('.nimea-hotspot').forEach(el=>el.style.background='');
+
+  // Check all answered
+  if(Object.keys(nimeaTila.vastattu).length===t.hotspotOikein.length){
+    const p=document.getElementById('palaute-nimea');
+    p.className='palaute oikein';p.textContent='✅ Kaikki kohdat nimetty oikein! '+t.selitys;
+    viimeistelyTehtava(true);
+  }
+}
+
+// ── Järjestä ──
+function initDrag(){
+  const list=document.getElementById('jarj-list');if(!list)return;
+  let dragged=null;
+  list.querySelectorAll('.jarj-item').forEach(item=>{
+    item.addEventListener('dragstart',()=>{dragged=item;setTimeout(()=>item.classList.add('dragging'),0);});
+    item.addEventListener('dragend',()=>{item.classList.remove('dragging');dragged=null;});
+    item.addEventListener('dragover',e=>{e.preventDefault();if(dragged&&dragged!==item){const r=item.getBoundingClientRect();if(e.clientY<r.top+r.height/2)list.insertBefore(dragged,item);else list.insertBefore(dragged,item.nextSibling);}});
+  });
+}
+
+function valitseMV(id){
+  if(tila.vastattu) return;
+  tila.valittuMV=id;
+  document.querySelectorAll('.mv-btn').forEach(b=>b.classList.remove('valittu'));
+  document.getElementById('mv-'+id)?.classList.add('valittu');
+}
+
+// ── Viimeistely (yhdistä, nimeä, slider) ──
+function viimeistelyTehtava(ok){
+  tila.vastattu=true;
+  if(ok){tila.pisteet+=nykyinenTehtavaData.pisteet;tila.oikein++;tila.streak++;if(tila.streak>tila.bestStreak)tila.bestStreak=tila.streak;}
+  else{tila.vaarin++;tila.streak=0;}
+  paivitaHUD();
+  naytaPopup(ok,nykyinenTehtavaData.pisteet);
+  document.getElementById('g-btn-tarkista').style.display='none';
+  document.getElementById('g-btn-seuraava-t').style.display='inline-flex';
+}
+
+// ═══════════════════════════════════════════════════
+// TARKISTA VASTAUS
+// ═══════════════════════════════════════════════════
+function tarkistaVastaus(){
+  if(tila.vastattu) return;
+  const t=nykyinenTehtavaData;let ok=false;
+
+  if(t.tyyppi==='mv'){
+    if(!tila.valittuMV){
+      const p=document.getElementById('palaute-mv');p.className='palaute vaarin';p.textContent='⚠️ Valitse vaihtoehto ensin!';return;
+    }
+    ok=tila.valittuMV===t.oikein;
+    t.vaihtoehdot.forEach(v=>{const b=document.getElementById('mv-'+v.id);if(!b)return;b.disabled=true;if(v.id===t.oikein)b.classList.add('oikein');else if(v.id===tila.valittuMV&&!ok)b.classList.add('vaarin');});
+    const p=document.getElementById('palaute-mv');p.className='palaute '+(ok?'oikein':'vaarin');p.textContent=(ok?'✅ Oikein! ':'❌ Ei ihan. ')+t.selitys;
+
+  } else if(t.tyyppi==='lasku'){
+    const vas={};t.kentat.forEach(k=>{vas[k.id]=document.getElementById('linp-'+k.id)?.value||'';});
+    ok=t.tarkista(vas);
+    t.kentat.forEach(k=>{
+      const inp=document.getElementById('linp-'+k.id);if(inp){inp.classList.add(ok?'oikein':'vaarin');inp.readOnly=true;}
+      const p=document.getElementById('lpalaute-'+k.id);if(p){p.className='palaute '+(ok?'oikein':'vaarin');p.textContent=(ok?'✅ Oikein! ':'❌ Ei ihan. ')+t.selitys;}
+    });
+
+  } else if(t.tyyppi==='tayta'){
+    const inputs=document.querySelectorAll('.tayta-input');let kaikki=true;
+    inputs.forEach((inp,i)=>{
+      const val=inp.value.trim().toLowerCase();
+      const match=t.oikein[i].some(o=>val===o.toLowerCase());
+      inp.className='tayta-input '+(match?'oikein':'vaarin');inp.readOnly=true;
+      if(!match)kaikki=false;
+    });
+    ok=kaikki;
+    const p=document.getElementById('palaute-tayta');p.className='palaute '+(ok?'oikein':'vaarin');p.textContent=(ok?'✅ Oikein! ':'❌ Ei ihan. ')+t.selitys;
+
+  } else if(t.tyyppi==='jarjesta'){
+    const items=document.querySelectorAll('#jarj-list .jarj-item');
+    const nyk=[...items].map(el=>parseInt(el.dataset.idx));
+    ok=nyk.every((v,i)=>v===t.oikein_jarjestys[i]);
+    items.forEach((el,i)=>el.classList.add(nyk[i]===t.oikein_jarjestys[i]?'oikein':'vaarin'));
+    const p=document.getElementById('palaute-jarjesta');p.className='palaute '+(ok?'oikein':'vaarin');p.textContent=(ok?'✅ Oikein! ':'❌ Ei ihan. ')+t.selitys;
+
+  } else if(t.tyyppi==='kylla'){
+    let pisteetOikein=0;
+    t.vaitamat.forEach((v,i)=>{
+      const vastaus=kyllaVastaukset[i];
+      const match=vastaus===v.oikein;
+      if(match)pisteetOikein++;
+      document.getElementById('vi-'+i).textContent=match?'✅':'❌';
+      document.getElementById('vr-'+i).className='vaitama-row '+(match?'oikein':'vaarin');
+      document.getElementById('vbk-'+i).disabled=true;
+      document.getElementById('vbe-'+i).disabled=true;
+      if(v.oikein){document.getElementById('vbk-'+i).className='vaitama-btn kylla correct';}
+      else{document.getElementById('vbe-'+i).className='vaitama-btn ei correct';}
+    });
+    ok=pisteetOikein===t.vaitamat.length;
+    const p=document.getElementById('palaute-kylla');
+    p.className='palaute '+(ok?'oikein':'vaarin');
+    p.textContent=ok?`✅ Kaikki oikein!`:`${pisteetOikein}/${t.vaitamat.length} oikein. Vihreät = oikea vastaus.`;
+    kyllaVastaukset={};
+
+  } else if(t.tyyppi==='slider'){
+    // Tarkista napautuu vain jos slider-q-btn ei ole vielä painettu
+    const p=document.getElementById('palaute-slider');
+    p.className='palaute vaarin';p.textContent='⚠️ Valitse ensin vastaus kysymykseen alla!';
+    return;
+
+  } else if(t.tyyppi==='yhdista'){
+    // Tarkistus tapahtuu automaattisesti — jos tähän asti ei ole yhdistetty kaikkia
+    const p=document.getElementById('palaute-yhdista');
+    p.className='palaute vaarin';p.textContent='⚠️ Yhdistä kaikki parit ensin vetämällä!';
+    return;
+
+  } else if(t.tyyppi==='nimea'){
+    const p=document.getElementById('palaute-nimea');
+    p.className='palaute vaarin';p.textContent='⚠️ Nimeä kaikki kohdat ensin!';
+    return;
+  }
+
+  viimeistelyTehtava(ok);
+}
+
+// ═══════════════════════════════════════════════════
+// POPUP & RESULTS
+// ═══════════════════════════════════════════════════
+function naytaPopup(ok,pisteet){
+  document.getElementById('popup-overlay').classList.add('nakyva');
+  const st=tila.streak>2?` 🔥 ${tila.streak} putki!`:'';
+  if(ok){
+    document.getElementById('p-emoji').textContent=pisteet>=15?'🌟':'✅';
+    document.getElementById('p-otsikko').textContent=pisteet>=15?'Mahtavaa!':'Oikein!';
+    document.getElementById('p-pts').textContent=`+${pisteet} p`;
+    document.getElementById('p-teksti').textContent=['Hienosti!','Loistavaa!','Täydellinen!','Jatka samaan malliin!'][Math.floor(Math.random()*4)]+st;
+  } else {
+    document.getElementById('p-emoji').textContent='💪';
+    document.getElementById('p-otsikko').textContent='Ei ihan!';
+    document.getElementById('p-pts').textContent='+0 p';
+    document.getElementById('p-teksti').textContent='Katso selitys alta ja jatka!';
+  }
+  document.getElementById('popup').classList.add('nakyva');
+  if(ok&&pisteet>=10) setTimeout(confetti,200);
+}
+function suljePopup(){document.getElementById('popup').classList.remove('nakyva');document.getElementById('popup-overlay').classList.remove('nakyva');}
+
+function seuraavaTehtava(){
+  suljePopup();
+  kyllaVastaukset={};
+  const tehtavat=TEHTAVAT[tila.nykyinenModuuli];
+  tila.nykyinenTehtava++;
+  if(tila.nykyinenTehtava>=tehtavat.length){
+    tila.suoritettu[tila.nykyinenModuuli].tehtavat=true;
+    tallennaGoogleFormsiin();
+    naytaTulokset();
+  } else { renderTehtava(); window.scrollTo(0,0); }
+}
+
+function naytaTulokset(){
+  const t=nykyinenTaso(),total=tila.oikein+tila.vaarin,pct=total>0?Math.round(tila.oikein/total*100):0;
+  let emoji='⚙️',viesti='Harjoittele lisää — olet hyvällä tiellä!';
+  if(pct>=90){emoji='🏆';viesti='Erinomainen suoritus!';}
+  else if(pct>=75){emoji='⭐';viesti='Hienoa työtä!';}
+  else if(pct>=60){emoji='💪';viesti='Hyvä yritys! Käy teoria uudestaan.';}
+  document.getElementById('g-t-emoji').textContent=emoji;
+  document.getElementById('g-t-pisteet').textContent=tila.pisteet;
+  document.getElementById('g-t-taso').textContent=`${t.emoji} ${t.nimi}`;
+  document.getElementById('g-t-viesti').textContent=viesti;
+  document.getElementById('g-t-oikein').textContent=tila.oikein;
+  document.getElementById('g-t-vaarin').textContent=tila.vaarin;
+  document.getElementById('g-t-streak').textContent=tila.bestStreak;
+  const m=tila.nykyinenModuuli;
+  document.getElementById('g-kertaus-box').innerHTML=`<h4>📚 Muista nämä kaavat!</h4>`+(m==='liike'?
+    `<div class="kertaus-item">⚡ <strong>v = s ÷ t</strong></div><div class="kertaus-item">📏 <strong>s = v × t</strong></div><div class="kertaus-item">⏱️ <strong>t = s ÷ v</strong></div>`:
+    `<div class="kertaus-item">💪 <strong>F = m × a</strong></div><div class="kertaus-item">🌍 <strong>Fg = m × g</strong></div><div class="kertaus-item">⚖️ <strong>g ≈ 10 m/s²</strong></div>`);
+  naytaGPage('tulokset');
+  if(pct>=75) setTimeout(confetti,300);
+}
+
+function pelaaUudestaan(){tila.oikein=0;tila.vaarin=0;tila.streak=0;tila.nykyinenTehtava=0;aloitaTehtavat();}
+
+function confetti(){
+  const cols=['#f78166','#58a6ff','#3fb950','#e3b341','#bc8cff'];
+  for(let i=0;i<55;i++){
+    const el=document.createElement('div');el.className='confetti-piece';
+    el.style.cssText=`left:${Math.random()*100}vw;top:-20px;background:${cols[Math.floor(Math.random()*cols.length)]};width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*.6}s;`;
+    document.body.appendChild(el);el.addEventListener('animationend',()=>el.remove());
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+ladataKoodit();
+document.getElementById('loading-overlay').classList.add('hidden');
+naytaSivu('login');
+paivitaHUD();</script>
+</body>
+</html>
